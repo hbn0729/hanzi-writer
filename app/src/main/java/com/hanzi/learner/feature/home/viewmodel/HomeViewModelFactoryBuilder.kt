@@ -13,7 +13,7 @@ object HomeViewModelFactoryBuilder {
         appSettingsRepository: AppSettingsRepositoryContract,
         disabledCharRepository: DisabledCharRepositoryContract,
         characterRepositoryProvider: CharacterRepositoryProvider,
-        navigationCallback: (HomeNavigation) -> Unit = {},
+        navigationCallback: (HomeNavigation) -> Unit,
     ): HomeViewModel.Factory {
         val resolveCharacterRepositoryUseCase = ResolveHomeCharacterRepositoryUseCase(
             appSettingsRepository = appSettingsRepository,

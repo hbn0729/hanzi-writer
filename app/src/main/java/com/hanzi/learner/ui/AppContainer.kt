@@ -5,6 +5,10 @@ import com.hanzi.learner.db.AppSettingsRepositoryContract
 import com.hanzi.learner.db.DisabledCharRepositoryContract
 import com.hanzi.learner.db.ProgressRepositoryContract
 import com.hanzi.learner.db.TimeProvider
+import com.hanzi.learner.feature.admin.domain.AdminCharacterDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminDashboardDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminIndexDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminLearningDataLoader
 import com.hanzi.learner.feature.admin.repository.AdminAppSettingsRepository
 import com.hanzi.learner.feature.admin.repository.AdminDisabledCharRepository
 import com.hanzi.learner.feature.admin.repository.AdminIndexRepository
@@ -58,6 +62,10 @@ class AppContainer(
     override val phraseImportPort: PhraseImportPort = adminModule.phraseImportPort
     override val curriculumImportPort: CurriculumImportPort = adminModule.curriculumImportPort
     override val strokeImportPort: StrokeImportPort = adminModule.strokeImportPort
+    override val adminIndexDataLoader: AdminIndexDataLoader = adminModule.adminIndexDataLoader
+    override val adminDashboardDataLoader: AdminDashboardDataLoader = adminModule.adminDashboardDataLoader
+    override val adminCharacterDataLoader: AdminCharacterDataLoader = adminModule.adminCharacterDataLoader
+    override val adminLearningDataLoader: AdminLearningDataLoader = adminModule.adminLearningDataLoader
 
     override val homeDeps: HomeFeatureDependencies = this
     override val practiceDeps: PracticeFeatureDependencies = this

@@ -11,10 +11,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.hanzi.learner.feature.admin.ui.AdminScreen
 import com.hanzi.learner.feature.home.ui.HomeScreen
-import com.hanzi.learner.feature.home.viewmodel.HomeNavigation
 import com.hanzi.learner.feature.home.viewmodel.HomeViewModel
 import com.hanzi.learner.feature.home.viewmodel.HomeViewModelFactoryBuilder
 import com.hanzi.learner.feature.practice.ui.PracticeScreen
+import com.hanzi.learner.ui.navigation.HomeNavigationHandler
+import com.hanzi.learner.ui.navigation.NavHostControllerAdapter
 
 @Composable
 internal fun AppNavGraph(
@@ -22,6 +23,8 @@ internal fun AppNavGraph(
     paddingValues: PaddingValues,
     appDeps: AppDependencies,
 ) {
+    val homeNavigationHandler = remember { HomeNavigationHandler(NavHostControllerAdapter(navController)) }
+
     NavHost(
         navController = navController,
         startDestination = AppRoutes.HOME,
@@ -35,20 +38,7 @@ internal fun AppNavGraph(
                     appSettingsRepository = deps.appSettingsRepository,
                     disabledCharRepository = deps.disabledCharRepository,
                     characterRepositoryProvider = deps.characterRepositoryProvider,
-                    navigationCallback = { nav ->
-                        val current = navController.currentBackStackEntry?.destination?.route
-                        if (current == AppRoutes.HOME) {
-                            when (nav) {
-                                HomeNavigation.NavigateToPractice -> navController.navigate(AppRoutes.PRACTICE) {
-                                    launchSingleTop = true
-                                }
-
-                                HomeNavigation.NavigateToReview -> navController.navigate(AppRoutes.REVIEW) {
-                                    launchSingleTop = true
-                                }
-                            }
-                        }
-                    },
+                    navigationCallback = homeNavigationHandler::handle,
                 )
             }
             val viewModel: HomeViewModel = viewModel(

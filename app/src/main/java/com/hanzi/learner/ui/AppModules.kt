@@ -20,6 +20,14 @@ import com.hanzi.learner.db.TimeProvider
 import com.hanzi.learner.feature.admin.backup.BackupZipExtractor
 import com.hanzi.learner.feature.admin.backup.StrokeDatasetParser
 import com.hanzi.learner.feature.admin.backup.StrokeDatasetWriter
+import com.hanzi.learner.feature.admin.domain.AdminCharacterDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminCharacterDataLoaderImpl
+import com.hanzi.learner.feature.admin.domain.AdminDashboardDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminDashboardDataLoaderImpl
+import com.hanzi.learner.feature.admin.domain.AdminIndexDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminIndexDataLoaderImpl
+import com.hanzi.learner.feature.admin.domain.AdminLearningDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminLearningDataLoaderImpl
 import com.hanzi.learner.feature.admin.repository.AdminAppSettingsRepository
 import com.hanzi.learner.feature.admin.repository.AdminAppSettingsRepositoryImpl
 import com.hanzi.learner.feature.admin.repository.AdminBackupDataTransferPortAdapter
@@ -91,6 +99,10 @@ internal interface AdminModuleApi {
     val phraseImportPort: PhraseImportPort
     val curriculumImportPort: CurriculumImportPort
     val strokeImportPort: StrokeImportPort
+    val adminIndexDataLoader: AdminIndexDataLoader
+    val adminDashboardDataLoader: AdminDashboardDataLoader
+    val adminCharacterDataLoader: AdminCharacterDataLoader
+    val adminLearningDataLoader: AdminLearningDataLoader
 }
 
 internal class CoreDataModule(
@@ -190,5 +202,30 @@ internal class AdminModule(
         backupZipExtractor = backupZipExtractor,
         strokeDatasetParser = strokeDatasetParser,
         strokeDatasetWriter = strokeDatasetWriter,
+    )
+
+    override val adminIndexDataLoader: AdminIndexDataLoader = AdminIndexDataLoaderImpl(
+        indexRepository = adminIndexRepository,
+    )
+
+    override val adminDashboardDataLoader: AdminDashboardDataLoader = AdminDashboardDataLoaderImpl(
+        indexRepository = adminIndexRepository,
+        appSettingsRepository = adminAppSettingsRepository,
+        disabledCharRepository = adminDisabledCharRepository,
+        progressQueryRepository = adminProgressQueryRepository,
+        phraseOverrideRepository = adminPhraseOverrideRepository,
+        timeProvider = coreDataModule.timeProvider,
+    )
+
+    override val adminCharacterDataLoader: AdminCharacterDataLoader = AdminCharacterDataLoaderImpl(
+        indexRepository = adminIndexRepository,
+        disabledCharRepository = adminDisabledCharRepository,
+        progressQueryRepository = adminProgressQueryRepository,
+    )
+
+    override val adminLearningDataLoader: AdminLearningDataLoader = AdminLearningDataLoaderImpl(
+        indexRepository = adminIndexRepository,
+        progressQueryRepository = adminProgressQueryRepository,
+        disabledCharRepository = adminDisabledCharRepository,
     )
 }

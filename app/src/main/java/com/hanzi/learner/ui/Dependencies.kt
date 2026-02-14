@@ -4,6 +4,10 @@ import com.hanzi.learner.db.AppSettingsRepositoryContract
 import com.hanzi.learner.db.DisabledCharRepositoryContract
 import com.hanzi.learner.db.ProgressRepositoryContract
 import com.hanzi.learner.db.TimeProvider
+import com.hanzi.learner.feature.admin.domain.AdminCharacterDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminDashboardDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminIndexDataLoader
+import com.hanzi.learner.feature.admin.domain.AdminLearningDataLoader
 import com.hanzi.learner.feature.admin.repository.AdminAppSettingsRepository
 import com.hanzi.learner.feature.admin.repository.AdminDisabledCharRepository
 import com.hanzi.learner.feature.admin.repository.AdminIndexRepository
@@ -44,6 +48,10 @@ interface AdminFeatureDependencies {
     val phraseImportPort: PhraseImportPort
     val curriculumImportPort: CurriculumImportPort
     val strokeImportPort: StrokeImportPort
+    val adminIndexDataLoader: AdminIndexDataLoader
+    val adminDashboardDataLoader: AdminDashboardDataLoader
+    val adminCharacterDataLoader: AdminCharacterDataLoader
+    val adminLearningDataLoader: AdminLearningDataLoader
 }
 
 interface AppDependencies {

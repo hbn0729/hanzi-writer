@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.hanzi.learner.feature.admin.domain.AdminIndexDataLoader
 import com.hanzi.learner.hanzi.data.CharIndexItem
 import com.hanzi.learner.ui.AdminFeatureDependencies
 
@@ -28,13 +29,16 @@ fun AdminScreen(
     paddingValues: PaddingValues,
     onBack: () -> Unit,
     deps: AdminFeatureDependencies,
+    indexDataLoader: AdminIndexDataLoader = remember(deps) {
+        deps.adminIndexDataLoader
+    },
 ) {
     val dataChangedNotifier = remember { AdminDataChangedNotifier() }
     val factories = remember(deps) { AdminViewModelFactories.from(deps) }
     val refreshVersion by dataChangedNotifier.version.collectAsState()
     var indexItems by remember { mutableStateOf<List<CharIndexItem>>(emptyList()) }
-    LaunchedEffect(refreshVersion, deps) {
-        indexItems = deps.adminIndexRepository.loadIndex()
+    LaunchedEffect(refreshVersion, indexDataLoader) {
+        indexItems = indexDataLoader.load()
     }
 
     val tabs = remember(onBack, factories, dataChangedNotifier, indexItems) {
