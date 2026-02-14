@@ -1,0 +1,38 @@
+package com.hanzi.learner.db
+
+import com.hanzi.learner.db.BackupRepositoryContract
+
+enum class ImportMode {
+    Replace,
+    Merge,
+}
+
+data class ExportOptions(
+    val progress: Boolean = true,
+    val phraseOverrides: Boolean = true,
+    val disabledChars: Boolean = true,
+    val settings: Boolean = true,
+)
+
+class BackupManager(
+    private val serializer: BackupSerializer,
+    private val repository: BackupRepositoryContract,
+) {
+    suspend fun exportJson(
+        options: ExportOptions = ExportOptions(),
+    ): String {
+        val data = repository.read(options)
+        return serializer.encode(data)
+    }
+
+    suspend fun importJson(
+        json: String,
+        mode: ImportMode = ImportMode.Replace,
+    ) {
+        val data = serializer.decode(json)
+        when (mode) {
+            ImportMode.Replace -> repository.replaceAll(data)
+            ImportMode.Merge -> repository.mergeAll(data)
+        }
+    }
+}

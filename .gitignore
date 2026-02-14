@@ -1,0 +1,46 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+/trae
+/.trae/
+# Local configuration
+local.properties
+
+AGENTS.md
+# Kotlin
+.kotlin/
+kotlin-lsp-*.zip
+kotlin-lsp-*/
+kotlin-lsp-*.zip:Zone.Identifier
+kotlin-lsp-*/**:Zone.Identifier
+# Mac/Windows
+.DS_Store
+Thumbs.db
+gradle-7.4-all.zip
+# Logs
+*.log
+.sisyphus/
+# Keystore
+*.jks
+*.keystore
+
+# Generated
+*.apk
+*.aab
+*.ap_
+**/generated/
+**/intermediates/
+**/outputs/
+**/reports/
+
+# External native build
+.externalNativeBuild/
+.cxx/
