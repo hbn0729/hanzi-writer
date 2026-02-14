@@ -1,6 +1,7 @@
 package com.hanzi.learner.feature.admin.ui
 
 import com.hanzi.learner.db.TimeProvider
+import com.hanzi.learner.feature.admin.domain.LoadAdminDashboardUseCase
 import com.hanzi.learner.feature.admin.repository.AdminAppSettingsRepository
 import com.hanzi.learner.feature.admin.repository.AdminDisabledCharRepository
 import com.hanzi.learner.feature.admin.repository.AdminIndexRepository
@@ -32,13 +33,15 @@ class AdminViewModelFactories(
     private val strokeImportPort: StrokeImportPort,
 ) {
     fun dashboardFactory(): AdminDashboardViewModel.Factory = AdminDashboardViewModel.Factory(
-        indexRepository = indexRepository,
-        appSettingsRepository = appSettingsRepository,
-        disabledCharRepository = disabledCharRepository,
-        progressQueryRepository = progressQueryRepository,
         progressCommandRepository = progressCommandRepository,
-        phraseOverrideRepository = phraseOverrideRepository,
         timeProvider = timeProvider,
+        loadDashboardUseCase = LoadAdminDashboardUseCase(
+            indexRepository = indexRepository,
+            appSettingsRepository = appSettingsRepository,
+            disabledCharRepository = disabledCharRepository,
+            progressRepository = progressQueryRepository,
+            phraseOverrideRepository = phraseOverrideRepository,
+        ),
     )
 
     fun characterFactory(): AdminCharacterViewModel.Factory = AdminCharacterViewModel.Factory(

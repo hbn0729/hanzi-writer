@@ -7,12 +7,7 @@ import com.hanzi.learner.db.TimeProvider
 import com.hanzi.learner.feature.admin.domain.LoadAdminDashboardUseCase
 import com.hanzi.learner.feature.admin.model.AdminProgress
 import com.hanzi.learner.feature.admin.model.AdminStudyCount
-import com.hanzi.learner.feature.admin.repository.AdminAppSettingsRepository
-import com.hanzi.learner.feature.admin.repository.AdminDisabledCharRepository
-import com.hanzi.learner.feature.admin.repository.AdminIndexRepository
-import com.hanzi.learner.feature.admin.repository.AdminPhraseOverrideRepository
 import com.hanzi.learner.feature.admin.repository.AdminProgressCommandRepository
-import com.hanzi.learner.feature.admin.repository.AdminProgressQueryRepository
 import com.hanzi.learner.hanzi.data.CharIndexItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,13 +97,9 @@ class AdminDashboardViewModel(
     }
 
     class Factory(
-        private val indexRepository: AdminIndexRepository,
-        private val appSettingsRepository: AdminAppSettingsRepository,
-        private val disabledCharRepository: AdminDisabledCharRepository,
-        private val progressQueryRepository: AdminProgressQueryRepository,
         private val progressCommandRepository: AdminProgressCommandRepository,
-        private val phraseOverrideRepository: AdminPhraseOverrideRepository,
         private val timeProvider: TimeProvider,
+        private val loadDashboardUseCase: LoadAdminDashboardUseCase,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -116,13 +107,7 @@ class AdminDashboardViewModel(
                 return AdminDashboardViewModel(
                     progressCommandRepository = progressCommandRepository,
                     timeProvider = timeProvider,
-                    loadDashboardUseCase = LoadAdminDashboardUseCase(
-                        indexRepository = indexRepository,
-                        appSettingsRepository = appSettingsRepository,
-                        disabledCharRepository = disabledCharRepository,
-                        progressRepository = progressQueryRepository,
-                        phraseOverrideRepository = phraseOverrideRepository,
-                    ),
+                    loadDashboardUseCase = loadDashboardUseCase,
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

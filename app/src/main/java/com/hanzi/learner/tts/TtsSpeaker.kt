@@ -14,11 +14,11 @@ import java.util.UUID
 
 class TtsSpeaker(
     context: Context,
-) : TextToSpeech.OnInitListener {
+) : TtsSpeakerContract, TextToSpeech.OnInitListener {
     private val tts = TextToSpeech(context.applicationContext, this)
     
     private val _isReady = MutableStateFlow(false)
-    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
+    override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
     
     private var pendingCharacter: String? = null
     private var pendingPhrase: String? = null
@@ -36,12 +36,12 @@ class TtsSpeaker(
         }
     }
 
-    fun speak(text: String) {
+    override fun speak(text: String) {
         if (!_isReady.value) return
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, UUID.randomUUID().toString())
     }
 
-    fun speakCharacterAndPhrase(character: String, phrase: String) {
+    override fun speakCharacterAndPhrase(character: String, phrase: String) {
         if (!_isReady.value) {
             pendingCharacter = character
             pendingPhrase = phrase
@@ -57,7 +57,7 @@ class TtsSpeaker(
         }
     }
 
-    fun shutdown() {
+    override fun shutdown() {
         tts.stop()
         tts.shutdown()
     }

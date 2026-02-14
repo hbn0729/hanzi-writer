@@ -8,20 +8,6 @@ import com.hanzi.learner.hanzi.data.CharacterRepository
 import com.hanzi.learner.hanzi.model.CharacterData
 import com.hanzi.learner.feature.common.ports.CharacterRepositoryProvider
 
-data class PracticeSessionState(
-    val isSessionComplete: Boolean = false,
-    val allDisabled: Boolean = false,
-    val noReviewsDue: Boolean = false,
-    val currentCharacter: CharacterData? = null,
-    val currentItem: CharIndexItem? = null,
-    val currentPhrase: String = "",
-    val strokeIndex: Int = 0,
-    val completedStrokeCount: Int = 0,
-    val mistakesOnStroke: Int = 0,
-    val hintAfterMisses: Int = 2,
-    val windowItems: List<CharIndexItem> = emptyList(),
-)
-
 class PracticeSessionOrchestrator(
     private val appSettingsRepository: AppSettingsRepositoryContract,
     private val disabledCharRepository: DisabledCharRepositoryContract,
