@@ -1,6 +1,6 @@
 package com.hanzi.learner.db
 
-import com.hanzi.learner.feature.common.extensions.toPhraseList
+import com.hanzi.learner.db.toPhraseList
 
 class PhraseOverrideRepository(
     private val dao: PhraseOverrideDao,

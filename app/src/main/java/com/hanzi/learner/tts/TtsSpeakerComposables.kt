@@ -6,7 +6,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 
 @Composable
-fun rememberTtsSpeaker(context: Context): TtsSpeaker {
+fun rememberTtsSpeaker(context: Context): TtsSpeakerContract {
     val speaker = remember(context) { TtsSpeaker(context) }
     DisposableEffect(speaker) {
         onDispose { speaker.shutdown() }

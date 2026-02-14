@@ -3,7 +3,7 @@ package com.hanzi.learner.db
 import com.hanzi.learner.db.BackupRepositoryContract
 
 class BackupManager(
-    private val serializer: BackupSerializer,
+    private val serializer: BackupSerializerContract,
     private val repository: BackupRepositoryContract,
 ) {
     suspend fun exportJson(

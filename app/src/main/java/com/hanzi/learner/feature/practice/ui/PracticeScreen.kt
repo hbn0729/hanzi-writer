@@ -93,7 +93,7 @@ fun PracticeScreen(
 private fun PracticeFeedbackEffects(
     uiState: PracticeUiState,
     onAction: (PracticeAction) -> Unit,
-    speaker: com.hanzi.learner.tts.TtsSpeaker,
+    speaker: com.hanzi.learner.tts.TtsSpeakerContract,
 ) {
     val haptics = LocalHapticFeedback.current
 
@@ -130,7 +130,7 @@ private fun PracticeContent(
     onExit: () -> Unit,
     onAction: (PracticeAction) -> Unit,
     matcher: com.hanzi.learner.hanzi.match.StrokeMatcherContract,
-    speaker: com.hanzi.learner.tts.TtsSpeaker,
+    speaker: com.hanzi.learner.tts.TtsSpeakerContract,
 ) {
     val flashColor = when (uiState.flashColorState) {
         FlashState.Success -> Color(0x992E7D32)

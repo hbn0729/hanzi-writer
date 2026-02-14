@@ -1,14 +1,9 @@
 package com.hanzi.learner.feature.common.extensions
 
-import org.json.JSONArray
+import com.hanzi.learner.db.toPhraseList as dbToPhraseList
 
-fun String.toPhraseList(): List<String> {
-    return try {
-        val arr = JSONArray(this)
-        buildList(arr.length()) {
-            for (i in 0 until arr.length()) add(arr.getString(i))
-        }
-    } catch (_: Exception) {
-        emptyList()
-    }
-}
+/**
+ * Re-export for backward compatibility.
+ * Canonical implementation lives in [com.hanzi.learner.db.toPhraseList].
+ */
+fun String.toPhraseList(): List<String> = dbToPhraseList()

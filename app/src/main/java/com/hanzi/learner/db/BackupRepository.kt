@@ -25,22 +25,17 @@ class BackupRepository(
         progressDao.deleteAll()
         phraseOverrideDao.deleteAll()
         disabledCharDao.deleteAll()
-
-        for (p in data.progress) progressDao.upsert(p)
-        for (po in data.phraseOverrides) phraseOverrideDao.upsert(po)
-        for (ch in data.disabledChars) disabledCharDao.disable(DisabledCharEntity(char = ch))
-
-        val settings = data.settings
-        if (settings != null) {
-            appSettingsDao.upsert(settings.copy(id = 1))
-        }
+        writeAll(data)
     }
 
     override suspend fun mergeAll(data: BackupData) {
+        writeAll(data)
+    }
+
+    private suspend fun writeAll(data: BackupData) {
         for (p in data.progress) progressDao.upsert(p)
         for (po in data.phraseOverrides) phraseOverrideDao.upsert(po)
         for (ch in data.disabledChars) disabledCharDao.disable(DisabledCharEntity(char = ch))
-
         val settings = data.settings
         if (settings != null) {
             appSettingsDao.upsert(settings.copy(id = 1))

@@ -3,10 +3,11 @@ package com.hanzi.learner.db
 import org.json.JSONArray
 import org.json.JSONObject
 
-class BackupSerializer {
-    private val versionRegex = Regex("\"version\"\\s*:\\s*(\\d+)")
+class BackupSerializer(
+    private val versionValidator: BackupVersionValidator = DefaultBackupVersionValidator,
+) : BackupSerializerContract {
 
-    fun encode(data: BackupData): String {
+    override fun encode(data: BackupData): String {
         val obj = JSONObject()
         obj.put("version", data.version)
 
@@ -52,11 +53,8 @@ class BackupSerializer {
         return obj.toString()
     }
 
-    fun decode(json: String): BackupData {
-        val version = versionRegex.find(json)?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 0
-        if (version != 1) {
-            throw IllegalArgumentException("不支持的备份版本: $version")
-        }
+    override fun decode(json: String): BackupData {
+        val version = versionValidator.validate(json)
 
         val root = JSONObject(json)
         val progressArr = root.optJSONArray("progress") ?: JSONArray()

@@ -208,4 +208,16 @@ class ArchitectureGuardrailsTest {
                 .toList()
         }
     }
+    @Test
+    fun dbPackage_mustNotImportFeaturePackage() {
+        val base = projectRoot().resolve("app/src/main/java/com/hanzi/learner/db")
+        val importRegex = Regex("^import\\s+com\\.hanzi\\.learner\\.feature\\..+$", RegexOption.MULTILINE)
+        val violations = kotlinFilesUnder(base).filter { file ->
+            importRegex.containsMatchIn(String(Files.readAllBytes(file)))
+        }.map { it.invariantSeparatorsPathString }
+
+        if (violations.isNotEmpty()) {
+            fail("db package must not import feature package. Violations:\n${violations.joinToString("\n")}")
+        }
+    }
 }
