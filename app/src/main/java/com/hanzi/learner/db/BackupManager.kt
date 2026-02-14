@@ -2,18 +2,6 @@ package com.hanzi.learner.db
 
 import com.hanzi.learner.db.BackupRepositoryContract
 
-enum class ImportMode {
-    Replace,
-    Merge,
-}
-
-data class ExportOptions(
-    val progress: Boolean = true,
-    val phraseOverrides: Boolean = true,
-    val disabledChars: Boolean = true,
-    val settings: Boolean = true,
-)
-
 class BackupManager(
     private val serializer: BackupSerializer,
     private val repository: BackupRepositoryContract,

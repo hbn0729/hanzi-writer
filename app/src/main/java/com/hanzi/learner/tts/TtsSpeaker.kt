@@ -2,10 +2,6 @@ package com.hanzi.learner.tts
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -61,13 +57,4 @@ class TtsSpeaker(
         tts.stop()
         tts.shutdown()
     }
-}
-
-@Composable
-fun rememberTtsSpeaker(context: Context): TtsSpeaker {
-    val speaker = remember(context) { TtsSpeaker(context) }
-    DisposableEffect(speaker) {
-        onDispose { speaker.shutdown() }
-    }
-    return speaker
 }

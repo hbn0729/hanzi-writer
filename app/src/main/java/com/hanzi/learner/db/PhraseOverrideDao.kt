@@ -3,7 +3,6 @@ package com.hanzi.learner.db
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import com.hanzi.learner.feature.common.extensions.toPhraseList
 
 @Dao
 interface PhraseOverrideDao {
@@ -27,17 +26,4 @@ interface PhraseOverrideDao {
 
     @Query("DELETE FROM phrase_override")
     suspend fun deleteAll()
-}
-
-class PhraseOverrideRepository(
-    private val dao: PhraseOverrideDao,
-) : PhraseOverrideRepositoryContract {
-    override suspend fun getByChar(char: String): PhraseOverrideData? {
-        return dao.getByChar(char)?.let {
-            PhraseOverrideData(
-                char = it.char,
-                phrases = it.phrasesJson.toPhraseList(),
-            )
-        }
-    }
 }
