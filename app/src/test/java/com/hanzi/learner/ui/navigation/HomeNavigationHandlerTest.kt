@@ -1,8 +1,8 @@
-package com.hanzi.learner.ui.navigation
+package com.hanzi.learner.app.navigation
 
 import androidx.navigation.NavOptionsBuilder
-import com.hanzi.learner.feature.home.viewmodel.HomeNavigation
-import com.hanzi.learner.ui.AppRoutes
+import com.hanzi.learner.features.home.viewmodel.HomeNavigation
+import com.hanzi.learner.app.AppRoutes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

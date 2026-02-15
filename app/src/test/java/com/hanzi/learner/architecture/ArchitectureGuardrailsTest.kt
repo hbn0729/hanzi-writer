@@ -24,7 +24,7 @@ class ArchitectureGuardrailsTest {
         for (file in candidateFiles) {
             val text = String(Files.readAllBytes(file))
             if (
-                text.contains("import com.hanzi.learner.ui.AppContainer") ||
+                text.contains("import com.hanzi.learner.app.AppContainer") ||
                 text.contains("container: AppContainer")
             ) {
                 violations += file.invariantSeparatorsPathString
@@ -68,7 +68,7 @@ class ArchitectureGuardrailsTest {
             .map { it.invariantSeparatorsPathString }
 
         if (violations.isNotEmpty()) {
-            fail("Non-UI layers must not import com.hanzi.learner.ui.*. Violations:\n${violations.joinToString("\n")}")
+            fail("Non-UI layers must not import com.hanzi.learner.app.*. Violations:\n${violations.joinToString("\n")}")
         }
     }
 

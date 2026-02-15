@@ -1,15 +1,15 @@
-package com.hanzi.learner.feature.practice.domain
+package com.hanzi.learner.features.practice.domain
 
-import com.hanzi.learner.db.AppSettings
-import com.hanzi.learner.db.AppSettingsRepositoryContract
-import com.hanzi.learner.db.DisabledCharRepositoryContract
-import com.hanzi.learner.db.PhraseOverrideData
-import com.hanzi.learner.db.ProgressRepositoryContract
-import com.hanzi.learner.hanzi.data.CharIndexItem
-import com.hanzi.learner.hanzi.data.CharacterRepository
-import com.hanzi.learner.hanzi.model.CharacterData
-import com.hanzi.learner.hanzi.model.Point
-import com.hanzi.learner.feature.common.ports.CharacterRepositoryProvider
+import com.hanzi.learner.data.AppSettings
+import com.hanzi.learner.data.AppSettingsRepositoryContract
+import com.hanzi.learner.data.DisabledCharRepositoryContract
+import com.hanzi.learner.data.PhraseOverrideData
+import com.hanzi.learner.data.ProgressRepositoryContract
+import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character-writer.data.CharacterRepository
+import com.hanzi.learner.character-writer.model.CharacterData
+import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

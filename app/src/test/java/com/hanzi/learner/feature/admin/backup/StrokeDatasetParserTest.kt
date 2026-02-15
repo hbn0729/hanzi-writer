@@ -1,4 +1,4 @@
-package com.hanzi.learner.feature.admin.backup
+package com.hanzi.learner.features.admin.backup
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

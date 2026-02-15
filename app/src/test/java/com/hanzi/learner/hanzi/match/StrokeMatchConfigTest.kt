@@ -1,4 +1,4 @@
-package com.hanzi.learner.hanzi.match
+package com.hanzi.learner.character-writer.match
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

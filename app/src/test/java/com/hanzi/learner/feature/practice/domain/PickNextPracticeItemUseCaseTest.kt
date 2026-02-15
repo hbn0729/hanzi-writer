@@ -1,7 +1,7 @@
-package com.hanzi.learner.feature.practice.domain
+package com.hanzi.learner.features.practice.domain
 
-import com.hanzi.learner.db.ProgressRepositoryContract
-import com.hanzi.learner.hanzi.data.CharIndexItem
+import com.hanzi.learner.data.ProgressRepositoryContract
+import com.hanzi.learner.character-writer.data.CharIndexItem
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
