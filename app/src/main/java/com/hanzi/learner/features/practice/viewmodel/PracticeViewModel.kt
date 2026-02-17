@@ -7,8 +7,8 @@ import com.hanzi.learner.features.practice.domain.CompletePracticeCharacterUseCa
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngine
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
 import com.hanzi.learner.features.practice.domain.PracticeSessionState
-import com.hanzi.learner.character-writer.data.CharIndexItem
-import com.hanzi.learner.character-writer.model.CharacterData
+import com.hanzi.learner.character_writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.model.CharacterData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

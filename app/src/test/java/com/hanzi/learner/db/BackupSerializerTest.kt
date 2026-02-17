@@ -1,5 +1,6 @@
 package com.hanzi.learner.db
 
+import com.hanzi.learner.data.BackupSerializer
 import org.junit.Assert.fail
 import org.junit.Test
 

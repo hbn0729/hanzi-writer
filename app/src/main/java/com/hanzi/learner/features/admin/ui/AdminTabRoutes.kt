@@ -22,7 +22,7 @@ import com.hanzi.learner.features.admin.viewmodel.AdminCharacterViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminDashboardViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminLearningDataViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminSettingsViewModel
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 @Composable
 fun OverviewTabRoute(

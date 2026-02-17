@@ -1,8 +1,10 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import com.hanzi.learner.data.local.entity.HanziProgressEntity
+import com.hanzi.learner.data.local.entity.StudyCountRow
 
 @Dao
 interface HanziProgressDao {

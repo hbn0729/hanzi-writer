@@ -1,5 +1,12 @@
 package com.hanzi.learner.db
 
+import com.hanzi.learner.data.local.dao.HanziProgressDao
+import com.hanzi.learner.data.local.entity.HanziProgressEntity
+import com.hanzi.learner.data.local.entity.StudyCountRow
+import com.hanzi.learner.data.model.DefaultSpacedRepetitionPolicy
+import com.hanzi.learner.data.model.SystemTimeProvider
+import com.hanzi.learner.data.model.TimeProvider
+import com.hanzi.learner.data.repository.ProgressRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test

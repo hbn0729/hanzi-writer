@@ -1,4 +1,4 @@
-package com.hanzi.learner.character-writer.render
+package com.hanzi.learner.character_writer.render
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.hanzi.learner.character-writer.model.CharacterData
+import com.hanzi.learner.character_writer.model.CharacterData
 import kotlinx.coroutines.delay
 
 @Composable

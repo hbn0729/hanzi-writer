@@ -1,14 +1,14 @@
 package com.hanzi.learner.features.practice.domain
 
-import com.hanzi.learner.data.AppSettings
-import com.hanzi.learner.data.AppSettingsRepositoryContract
-import com.hanzi.learner.data.DisabledCharRepositoryContract
-import com.hanzi.learner.data.PhraseOverrideData
-import com.hanzi.learner.data.ProgressRepositoryContract
-import com.hanzi.learner.character-writer.data.CharIndexItem
-import com.hanzi.learner.character-writer.data.CharacterRepository
-import com.hanzi.learner.character-writer.model.CharacterData
-import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.data.model.AppSettings
+import com.hanzi.learner.data.repository.AppSettingsRepositoryContract
+import com.hanzi.learner.data.repository.DisabledCharRepositoryContract
+import com.hanzi.learner.data.model.PhraseOverrideData
+import com.hanzi.learner.data.repository.ProgressRepositoryContract
+import com.hanzi.learner.character_writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharacterRepository
+import com.hanzi.learner.character_writer.model.CharacterData
+import com.hanzi.learner.character_writer.model.Point
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

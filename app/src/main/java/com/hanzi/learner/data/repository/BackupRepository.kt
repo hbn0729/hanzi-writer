@@ -1,4 +1,13 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
+
+import com.hanzi.learner.data.local.dao.AppSettingsDao
+import com.hanzi.learner.data.local.dao.DisabledCharDao
+import com.hanzi.learner.data.local.dao.HanziProgressDao
+import com.hanzi.learner.data.local.dao.PhraseOverrideDao
+import com.hanzi.learner.data.local.entity.AppSettingsEntity
+import com.hanzi.learner.data.local.entity.DisabledCharEntity
+import com.hanzi.learner.data.model.BackupData
+import com.hanzi.learner.data.model.ExportOptions
 
 class BackupRepository(
     private val progressDao: HanziProgressDao,

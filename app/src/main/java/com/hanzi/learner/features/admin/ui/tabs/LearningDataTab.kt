@@ -16,7 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hanzi.learner.features.admin.model.AdminProgress
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 @Composable
 fun LearningDataTab(

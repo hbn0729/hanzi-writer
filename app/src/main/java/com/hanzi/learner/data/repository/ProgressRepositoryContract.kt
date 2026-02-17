@@ -1,4 +1,4 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
 
 interface ProgressRepositoryContract {
     suspend fun recordCompletion(char: String, totalMistakes: Int)

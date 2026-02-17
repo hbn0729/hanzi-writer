@@ -2,7 +2,7 @@ package com.hanzi.learner.features.home.domain
 
 import com.hanzi.learner.data.repository.AppSettingsRepositoryContract
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
-import com.hanzi.learner.character-writer.data.CharacterRepository
+import com.hanzi.learner.character_writer.data.CharacterRepository
 
 class ResolveHomeCharacterRepositoryUseCase(
     private val appSettingsRepository: AppSettingsRepositoryContract,

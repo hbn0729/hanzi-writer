@@ -1,5 +1,7 @@
 package com.hanzi.learner.data
 
+import com.hanzi.learner.data.model.ExportOptions
+import com.hanzi.learner.data.model.ImportMode
 import com.hanzi.learner.data.repository.BackupRepositoryContract
 
 class BackupManager(

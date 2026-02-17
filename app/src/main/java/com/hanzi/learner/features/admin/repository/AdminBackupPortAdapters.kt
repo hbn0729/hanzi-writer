@@ -15,7 +15,7 @@ import com.hanzi.learner.features.admin.repository.backup.BackupDataPort
 import com.hanzi.learner.features.admin.repository.backup.CurriculumImportService
 import com.hanzi.learner.features.admin.repository.backup.PhraseImportService
 import com.hanzi.learner.features.admin.repository.backup.StrokeDatasetImportService
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 import java.io.File
 
 class AdminBackupDataTransferPortAdapter(

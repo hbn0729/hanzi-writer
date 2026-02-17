@@ -1,6 +1,6 @@
-package com.hanzi.learner.character-writer.match
+package com.hanzi.learner.character_writer.match
 
-import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.character_writer.model.Point
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.ceil

@@ -1,7 +1,7 @@
 package com.hanzi.learner.features.practice.domain
 
-import com.hanzi.learner.character-writer.data.CharIndexItem
-import com.hanzi.learner.character-writer.data.CharacterRepository
+import com.hanzi.learner.character_writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharacterRepository
 
 
 class CurrentCharacterLoader(

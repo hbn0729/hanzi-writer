@@ -1,4 +1,7 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
+
+import com.hanzi.learner.data.model.BackupData
+import com.hanzi.learner.data.model.ExportOptions
 
 interface BackupRepositoryContract {
     suspend fun read(options: ExportOptions): BackupData

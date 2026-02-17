@@ -7,7 +7,7 @@ import com.hanzi.learner.features.admin.repository.AdminDisabledCharRepository
 import com.hanzi.learner.features.admin.repository.AdminIndexRepository
 import com.hanzi.learner.features.admin.repository.AdminPhraseOverrideRepository
 import com.hanzi.learner.features.admin.repository.AdminProgressQueryRepository
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 data class AdminDashboardSnapshot(
     val indexItems: List<CharIndexItem>,

@@ -1,7 +1,7 @@
 package com.hanzi.learner.features.admin.domain
 
 import com.hanzi.learner.features.admin.model.AdminProgress
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 interface AdminTabDataLoader<T> {
     suspend fun load(): T

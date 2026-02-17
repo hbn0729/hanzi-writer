@@ -1,5 +1,7 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
 
+import com.hanzi.learner.data.local.dao.PhraseOverrideDao
+import com.hanzi.learner.data.model.PhraseOverrideData
 import com.hanzi.learner.data.toPhraseList
 
 class PhraseOverrideRepository(

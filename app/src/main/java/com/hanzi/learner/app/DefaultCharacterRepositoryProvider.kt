@@ -2,7 +2,7 @@ package com.hanzi.learner.app
 
 import android.content.Context
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
-import com.hanzi.learner.character-writer.data.CharacterRepositoryFactory
+import com.hanzi.learner.character_writer.data.CharacterRepositoryFactory
 
 internal class DefaultCharacterRepositoryProvider(
     private val context: Context,

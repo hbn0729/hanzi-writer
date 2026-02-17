@@ -1,4 +1,4 @@
-package com.hanzi.learner.character-writer.data
+package com.hanzi.learner.character_writer.data
 
 data class CharIndexItem(
     val char: String,

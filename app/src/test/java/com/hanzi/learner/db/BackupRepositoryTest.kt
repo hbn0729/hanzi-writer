@@ -1,5 +1,17 @@
 package com.hanzi.learner.db
 
+import com.hanzi.learner.data.local.dao.AppSettingsDao
+import com.hanzi.learner.data.local.dao.DisabledCharDao
+import com.hanzi.learner.data.local.dao.HanziProgressDao
+import com.hanzi.learner.data.local.dao.PhraseOverrideDao
+import com.hanzi.learner.data.local.entity.AppSettingsEntity
+import com.hanzi.learner.data.local.entity.DisabledCharEntity
+import com.hanzi.learner.data.local.entity.HanziProgressEntity
+import com.hanzi.learner.data.local.entity.PhraseOverrideEntity
+import com.hanzi.learner.data.local.entity.StudyCountRow
+import com.hanzi.learner.data.model.BackupData
+import com.hanzi.learner.data.model.ExportOptions
+import com.hanzi.learner.data.repository.BackupRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test

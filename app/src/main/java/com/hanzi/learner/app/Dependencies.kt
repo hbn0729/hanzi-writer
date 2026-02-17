@@ -21,7 +21,7 @@ import com.hanzi.learner.features.admin.repository.StrokeImportPort
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import com.hanzi.learner.features.practice.domain.CompletePracticeCharacterUseCase
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
-import com.hanzi.learner.character-writer.match.StrokeMatcherContract
+import com.hanzi.learner.character_writer.match.StrokeMatcherContract
 
 interface HomeFeatureDependencies {
     val progressRepository: ProgressRepositoryContract

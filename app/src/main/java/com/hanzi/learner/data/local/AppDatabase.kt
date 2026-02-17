@@ -1,4 +1,4 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.local
 
 import android.content.Context
 import androidx.room.Database
@@ -6,6 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.hanzi.learner.data.local.dao.AppSettingsDao
+import com.hanzi.learner.data.local.dao.DisabledCharDao
+import com.hanzi.learner.data.local.dao.HanziProgressDao
+import com.hanzi.learner.data.local.dao.PhraseOverrideDao
+import com.hanzi.learner.data.local.entity.AppSettingsEntity
+import com.hanzi.learner.data.local.entity.DisabledCharEntity
+import com.hanzi.learner.data.local.entity.HanziProgressEntity
+import com.hanzi.learner.data.local.entity.PhraseOverrideEntity
 
 @Database(
     entities = [

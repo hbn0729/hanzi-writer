@@ -1,6 +1,6 @@
 package com.hanzi.learner.features.practice.domain
 
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 fun interface SessionCompletionRule {
     fun shouldComplete(

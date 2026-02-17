@@ -1,4 +1,4 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.model
 
 data class AppSettings(
     val duePickLimit: Int = 50,

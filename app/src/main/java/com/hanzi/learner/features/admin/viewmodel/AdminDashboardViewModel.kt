@@ -8,7 +8,7 @@ import com.hanzi.learner.features.admin.domain.LoadAdminDashboardUseCase
 import com.hanzi.learner.features.admin.model.AdminProgress
 import com.hanzi.learner.features.admin.model.AdminStudyCount
 import com.hanzi.learner.features.admin.repository.AdminProgressCommandRepository
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

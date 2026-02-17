@@ -1,4 +1,4 @@
-package com.hanzi.learner.character-writer.practice
+package com.hanzi.learner.character_writer.practice
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -24,13 +24,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.hanzi.learner.character-writer.match.StrokeMatchConfig
-import com.hanzi.learner.character-writer.match.StrokeMatchOptions
-import com.hanzi.learner.character-writer.match.StrokeMatchResult
-import com.hanzi.learner.character-writer.model.CharacterData
-import com.hanzi.learner.character-writer.model.Point
-import com.hanzi.learner.character-writer.render.HanziCanvas
-import com.hanzi.learner.character-writer.render.Positioner
+import com.hanzi.learner.character_writer.match.StrokeMatchConfig
+import com.hanzi.learner.character_writer.match.StrokeMatchOptions
+import com.hanzi.learner.character_writer.match.StrokeMatchResult
+import com.hanzi.learner.character_writer.model.CharacterData
+import com.hanzi.learner.character_writer.model.Point
+import com.hanzi.learner.character_writer.render.HanziCanvas
+import com.hanzi.learner.character_writer.render.Positioner
 
 @Composable
 fun HanziTraceOverlay(

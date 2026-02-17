@@ -1,7 +1,7 @@
-package com.hanzi.learner.character-writer.match
+package com.hanzi.learner.character_writer.match
 
-import com.hanzi.learner.character-writer.model.CharacterData
-import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.character_writer.model.CharacterData
+import com.hanzi.learner.character_writer.model.Point
 import kotlin.math.PI
 import kotlin.math.max
 import kotlin.math.min

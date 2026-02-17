@@ -3,9 +3,9 @@ package com.hanzi.learner.features.practice.domain
 import com.hanzi.learner.data.model.AppSettings
 import com.hanzi.learner.data.repository.AppSettingsRepositoryContract
 import com.hanzi.learner.data.repository.DisabledCharRepositoryContract
-import com.hanzi.learner.character-writer.data.CharIndexItem
-import com.hanzi.learner.character-writer.data.CharacterRepository
-import com.hanzi.learner.character-writer.model.CharacterData
+import com.hanzi.learner.character_writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharacterRepository
+import com.hanzi.learner.character_writer.model.CharacterData
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 
 class PracticeSessionOrchestrator(

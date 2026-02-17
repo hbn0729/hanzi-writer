@@ -1,4 +1,6 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
+
+import com.hanzi.learner.data.model.AppSettings
 
 interface AppSettingsRepositoryContract {
     suspend fun getSettings(): AppSettings

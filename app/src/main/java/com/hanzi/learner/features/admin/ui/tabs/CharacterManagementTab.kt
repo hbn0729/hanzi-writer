@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hanzi.learner.features.admin.model.AdminProgress
 import com.hanzi.learner.features.admin.ui.epochDayToText
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 private enum class CharFilterMode {
     ALL,

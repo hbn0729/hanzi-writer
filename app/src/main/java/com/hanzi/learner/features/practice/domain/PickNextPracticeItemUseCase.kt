@@ -1,7 +1,7 @@
 package com.hanzi.learner.features.practice.domain
 
 import com.hanzi.learner.data.repository.ProgressRepositoryContract
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 
 class PickNextPracticeItemUseCase(

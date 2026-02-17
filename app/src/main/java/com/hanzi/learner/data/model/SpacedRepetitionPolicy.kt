@@ -1,4 +1,4 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.model
 
 import kotlin.math.min
 

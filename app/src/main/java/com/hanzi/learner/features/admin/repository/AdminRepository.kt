@@ -7,7 +7,7 @@ import com.hanzi.learner.features.admin.model.AdminPhraseOverride
 import com.hanzi.learner.features.admin.model.AdminProgress
 import com.hanzi.learner.features.admin.model.AdminSettings
 import com.hanzi.learner.features.admin.model.AdminStudyCount
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 
 interface AdminIndexRepository {
     suspend fun loadIndex(): List<CharIndexItem>

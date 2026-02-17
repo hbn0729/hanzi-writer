@@ -1,4 +1,4 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
 
 interface DisabledCharRepositoryContract {
     suspend fun getAllDisabledChars(): List<String>

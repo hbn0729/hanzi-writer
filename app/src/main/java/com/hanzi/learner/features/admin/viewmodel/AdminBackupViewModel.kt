@@ -10,7 +10,7 @@ import com.hanzi.learner.features.admin.repository.BackupDataTransferPort
 import com.hanzi.learner.features.admin.repository.CurriculumImportPort
 import com.hanzi.learner.features.admin.repository.PhraseImportPort
 import com.hanzi.learner.features.admin.repository.StrokeImportPort
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,6 +1,6 @@
-package com.hanzi.learner.character-writer.data
+package com.hanzi.learner.character_writer.data
 
-import com.hanzi.learner.character-writer.model.CharacterData
+import com.hanzi.learner.character_writer.model.CharacterData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

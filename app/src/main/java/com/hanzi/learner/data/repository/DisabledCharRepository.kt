@@ -1,4 +1,7 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
+
+import com.hanzi.learner.data.local.dao.DisabledCharDao
+import com.hanzi.learner.data.local.entity.DisabledCharEntity
 
 class DisabledCharRepository(
     private val dao: DisabledCharDao,

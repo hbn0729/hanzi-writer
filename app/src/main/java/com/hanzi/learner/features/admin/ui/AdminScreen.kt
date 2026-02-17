@@ -16,7 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.hanzi.learner.features.admin.domain.AdminIndexDataLoader
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 import com.hanzi.learner.app.AdminFeatureDependencies
 
 private data class AdminTabDescriptor(

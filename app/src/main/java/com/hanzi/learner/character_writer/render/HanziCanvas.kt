@@ -1,4 +1,4 @@
-package com.hanzi.learner.character-writer.render
+package com.hanzi.learner.character_writer.render
 
 import android.graphics.Matrix
 import android.graphics.Paint
@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.PathParser
-import com.hanzi.learner.character-writer.model.CharacterData
-import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.character_writer.model.CharacterData
+import com.hanzi.learner.character_writer.model.Point
 
 @Composable
 fun HanziCanvas(

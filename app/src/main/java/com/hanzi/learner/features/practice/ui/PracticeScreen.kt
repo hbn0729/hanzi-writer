@@ -44,10 +44,10 @@ import com.hanzi.learner.features.practice.viewmodel.FlashState
 import com.hanzi.learner.features.practice.viewmodel.PracticeAction
 import com.hanzi.learner.features.practice.viewmodel.PracticeUiState
 import com.hanzi.learner.features.practice.viewmodel.PracticeViewModel
-import com.hanzi.learner.character-writer.match.StrokeMatchConfig
-import com.hanzi.learner.character-writer.match.StrokeMatchOptions
-import com.hanzi.learner.character-writer.match.matchesWithDefaults
-import com.hanzi.learner.character-writer.practice.HanziTraceOverlay
+import com.hanzi.learner.character_writer.match.StrokeMatchConfig
+import com.hanzi.learner.character_writer.match.StrokeMatchOptions
+import com.hanzi.learner.character_writer.match.matchesWithDefaults
+import com.hanzi.learner.character_writer.practice.HanziTraceOverlay
 import com.hanzi.learner.speech.rememberTtsSpeaker
 import com.hanzi.learner.app.PracticeFeatureDependencies
 import kotlinx.coroutines.delay
@@ -129,7 +129,7 @@ private fun PracticeContent(
     reviewOnly: Boolean,
     onExit: () -> Unit,
     onAction: (PracticeAction) -> Unit,
-    matcher: com.hanzi.learner.character-writer.match.StrokeMatcherContract,
+    matcher: com.hanzi.learner.character_writer.match.StrokeMatcherContract,
     speaker: com.hanzi.learner.speech.TtsSpeakerContract,
 ) {
     val flashColor = when (uiState.flashColorState) {
@@ -323,9 +323,9 @@ private fun TraceCanvas(
     modifier: Modifier,
     flashColor: Color?,
     uiState: PracticeUiState,
-    character: com.hanzi.learner.character-writer.model.CharacterData,
-    matcher: com.hanzi.learner.character-writer.match.StrokeMatcherContract,
-    onStrokeEnd: (com.hanzi.learner.character-writer.match.StrokeMatchResult) -> Unit,
+    character: com.hanzi.learner.character_writer.model.CharacterData,
+    matcher: com.hanzi.learner.character_writer.match.StrokeMatcherContract,
+    onStrokeEnd: (com.hanzi.learner.character_writer.match.StrokeMatchResult) -> Unit,
 ) {
     Box(
         modifier = modifier.background(color = flashColor ?: Color.Transparent),

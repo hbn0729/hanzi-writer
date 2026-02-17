@@ -5,7 +5,7 @@ import android.net.Uri
 import com.hanzi.learner.data.local.dao.DisabledCharDao
 import com.hanzi.learner.data.local.entity.DisabledCharEntity
 import com.hanzi.learner.features.admin.repository.CurriculumImportResult
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray

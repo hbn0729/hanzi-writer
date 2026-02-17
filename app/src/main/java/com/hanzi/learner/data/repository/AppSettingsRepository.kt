@@ -1,4 +1,8 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
+
+import com.hanzi.learner.data.local.dao.AppSettingsDao
+import com.hanzi.learner.data.local.entity.AppSettingsEntity
+import com.hanzi.learner.data.model.AppSettings
 
 class AppSettingsRepository(
     private val dao: AppSettingsDao,

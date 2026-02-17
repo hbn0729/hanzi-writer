@@ -1,7 +1,7 @@
 package com.hanzi.learner.features.practice.domain
 
-import com.hanzi.learner.character-writer.data.CharIndexItem
-import com.hanzi.learner.character-writer.model.CharacterData
+import com.hanzi.learner.character_writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.model.CharacterData
 
 data class PracticeSessionState(
     val isSessionComplete: Boolean = false,

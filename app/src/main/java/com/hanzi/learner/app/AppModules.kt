@@ -53,10 +53,10 @@ import com.hanzi.learner.features.practice.domain.PickNextPracticeItemUseCase
 import com.hanzi.learner.features.practice.domain.PhraseOverridePracticePhraseProvider
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
 import com.hanzi.learner.features.practice.domain.PracticeSessionOrchestrator
-import com.hanzi.learner.character-writer.data.CharacterRepositoryFactory
-import com.hanzi.learner.character-writer.data.DefaultCharacterRepositoryFactory
-import com.hanzi.learner.character-writer.match.DefaultStrokeMatcher
-import com.hanzi.learner.character-writer.match.StrokeMatcherContract
+import com.hanzi.learner.character_writer.data.CharacterRepositoryFactory
+import com.hanzi.learner.character_writer.data.DefaultCharacterRepositoryFactory
+import com.hanzi.learner.character_writer.match.DefaultStrokeMatcher
+import com.hanzi.learner.character_writer.match.StrokeMatcherContract
 
 internal interface CoreDataModuleDependencies {
     val database: AppDatabase

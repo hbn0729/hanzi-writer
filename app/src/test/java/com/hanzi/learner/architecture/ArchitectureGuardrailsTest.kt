@@ -15,8 +15,8 @@ class ArchitectureGuardrailsTest {
     fun uiScreens_mustNotDependOnAppContainer() {
         val base = projectRoot().resolve("app/src/main/java")
         val candidateFiles = listOf(
-            base.resolve("com/hanzi/learner/ui/HanziLearnerApp.kt"),
-        ) + kotlinFilesUnder(base.resolve("com/hanzi/learner/feature")).filter {
+            base.resolve("com/hanzi/learner/app/HanziLearnerApp.kt"),
+        ) + kotlinFilesUnder(base.resolve("com/hanzi/learner/features")).filter {
             it.invariantSeparatorsPathString.contains("/ui/")
         }
 
@@ -93,7 +93,7 @@ class ArchitectureGuardrailsTest {
     @Test
     fun localDateNow_mustOnlyAppearInTimeProvider() {
         val base = projectRoot().resolve("app/src/main/java")
-        val allowed = base.resolve("com/hanzi/learner/db/TimeProvider.kt").invariantSeparatorsPathString
+        val allowed = base.resolve("com/hanzi/learner/data/model/TimeProvider.kt").invariantSeparatorsPathString
 
         val violations = kotlinFilesUnder(base)
             .filter { file ->
@@ -110,7 +110,7 @@ class ArchitectureGuardrailsTest {
     @Test
     fun practiceViewModel_mustDependOnSessionEngineFactory_notConcreteOrchestrator() {
         val file = projectRoot()
-            .resolve("app/src/main/java/com/hanzi/learner/feature/practice/viewmodel/PracticeViewModel.kt")
+            .resolve("app/src/main/java/com/hanzi/learner/features/practice/viewmodel/PracticeViewModel.kt")
         val text = String(Files.readAllBytes(file))
         if (text.contains("PracticeSessionOrchestrator")) {
             fail("PracticeViewModel must depend on PracticeSessionEngineFactory, not PracticeSessionOrchestrator.")
@@ -120,7 +120,7 @@ class ArchitectureGuardrailsTest {
     @Test
     fun adminBackupViewModel_mustDependOnSegregatedBackupPorts() {
         val file = projectRoot()
-            .resolve("app/src/main/java/com/hanzi/learner/feature/admin/viewmodel/AdminBackupViewModel.kt")
+            .resolve("app/src/main/java/com/hanzi/learner/features/admin/viewmodel/AdminBackupViewModel.kt")
         val text = String(Files.readAllBytes(file))
         if (text.contains("AdminBackupRepository")) {
             fail("AdminBackupViewModel must depend on segregated backup ports instead of AdminBackupRepository.")
@@ -146,7 +146,7 @@ class ArchitectureGuardrailsTest {
     @Test
     fun practiceSessionEngine_contract_mustNotReferenceOrchestrator() {
         val file = projectRoot()
-            .resolve("app/src/main/java/com/hanzi/learner/feature/practice/domain/PracticeSessionEngine.kt")
+            .resolve("app/src/main/java/com/hanzi/learner/features/practice/domain/PracticeSessionEngine.kt")
         val text = String(Files.readAllBytes(file))
         if (text.contains("PracticeSessionOrchestrator")) {
             fail("PracticeSessionEngine contract must not reference PracticeSessionOrchestrator types.")

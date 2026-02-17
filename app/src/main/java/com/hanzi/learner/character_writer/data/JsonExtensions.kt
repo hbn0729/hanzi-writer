@@ -1,6 +1,6 @@
-package com.hanzi.learner.character-writer.data
+package com.hanzi.learner.character_writer.data
 
-import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.character_writer.model.Point
 import org.json.JSONArray
 
 fun JSONArray.toStringList(): List<String> = buildList(length()) {

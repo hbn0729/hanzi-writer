@@ -1,5 +1,6 @@
 package com.hanzi.learner.db
 
+import com.hanzi.learner.data.model.DefaultSpacedRepetitionPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

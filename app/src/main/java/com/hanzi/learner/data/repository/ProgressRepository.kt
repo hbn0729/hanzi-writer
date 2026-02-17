@@ -1,4 +1,9 @@
-package com.hanzi.learner.data
+package com.hanzi.learner.data.repository
+
+import com.hanzi.learner.data.local.dao.HanziProgressDao
+import com.hanzi.learner.data.local.entity.HanziProgressEntity
+import com.hanzi.learner.data.model.SpacedRepetitionPolicy
+import com.hanzi.learner.data.model.TimeProvider
 
 class ProgressRepository(
     private val dao: HanziProgressDao,

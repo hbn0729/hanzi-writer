@@ -2,7 +2,7 @@ package com.hanzi.learner.features.admin.repository
 
 import com.hanzi.learner.data.local.dao.AppSettingsDao
 import com.hanzi.learner.data.local.entity.AppSettingsEntity
-import com.hanzi.learner.character-writer.data.CharIndexItem
+import com.hanzi.learner.character_writer.data.CharIndexItem
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

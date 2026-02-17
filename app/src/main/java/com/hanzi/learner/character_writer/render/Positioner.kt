@@ -1,6 +1,6 @@
-package com.hanzi.learner.character-writer.render
+package com.hanzi.learner.character_writer.render
 
-import com.hanzi.learner.character-writer.model.Point
+import com.hanzi.learner.character_writer.model.Point
 import kotlin.math.min
 
 class Positioner(
