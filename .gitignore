@@ -2,7 +2,6 @@
 .gradle/
 build/
 **/build/
-
 # Android Studio
 .idea/
 *.iml
@@ -13,6 +12,9 @@ out/
 /.trae/
 # Local configuration
 local.properties
+libs/
+
+tts_models/
 
 AGENTS.md
 # Kotlin

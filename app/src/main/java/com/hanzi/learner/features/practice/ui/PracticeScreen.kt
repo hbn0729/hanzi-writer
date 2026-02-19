@@ -49,6 +49,7 @@ import com.hanzi.learner.character_writer.match.StrokeMatchOptions
 import com.hanzi.learner.character_writer.match.matchesWithDefaults
 import com.hanzi.learner.character_writer.practice.HanziTraceOverlay
 import com.hanzi.learner.speech.rememberTtsSpeaker
+import com.hanzi.learner.speech.contract.TtsSpeakerContract
 import com.hanzi.learner.app.PracticeFeatureDependencies
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,7 +94,7 @@ fun PracticeScreen(
 private fun PracticeFeedbackEffects(
     uiState: PracticeUiState,
     onAction: (PracticeAction) -> Unit,
-    speaker: com.hanzi.learner.speech.TtsSpeakerContract,
+    speaker: TtsSpeakerContract,
 ) {
     val haptics = LocalHapticFeedback.current
 
@@ -130,7 +131,7 @@ private fun PracticeContent(
     onExit: () -> Unit,
     onAction: (PracticeAction) -> Unit,
     matcher: com.hanzi.learner.character_writer.match.StrokeMatcherContract,
-    speaker: com.hanzi.learner.speech.TtsSpeakerContract,
+    speaker: TtsSpeakerContract,
 ) {
     val flashColor = when (uiState.flashColorState) {
         FlashState.Success -> Color(0x992E7D32)
