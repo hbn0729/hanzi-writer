@@ -58,7 +58,6 @@ class AdminViewModelFactories(
         progressQueryRepository = progressQueryRepository,
         progressCommandRepository = progressCommandRepository,
         phraseOverrideRepository = phraseOverrideRepository,
-        appSettingsRepository = appSettingsRepository,
         disabledCharRepository = disabledCharRepository,
     )
 

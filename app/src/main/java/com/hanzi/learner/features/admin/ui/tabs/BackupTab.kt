@@ -195,32 +195,6 @@ char
                         )
                     },
                 ) { Text(text = "仅导出短语覆盖") }
-                OutlinedButton(
-                    onClick = {
-                        onExport(
-                ExportOptions(
-                                progress = false,
-                                phraseOverrides = false,
-                                disabledChars = true,
-                                settings = false,
-                            ),
-                            "hanzi-disabled-chars.json",
-                        )
-                    },
-                ) { Text(text = "仅导出禁用字集合") }
-                OutlinedButton(
-                    onClick = {
-                        onExport(
-                ExportOptions(
-                                progress = false,
-                                phraseOverrides = false,
-                                disabledChars = false,
-                                settings = true,
-                            ),
-                            "hanzi-settings.json",
-                        )
-                    },
-                ) { Text(text = "仅导出设置") }
             }
         }
         item {

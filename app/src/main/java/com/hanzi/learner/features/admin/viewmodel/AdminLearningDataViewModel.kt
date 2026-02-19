@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.hanzi.learner.features.admin.model.AdminProgress
-import com.hanzi.learner.features.admin.model.AdminSettings
-import com.hanzi.learner.features.admin.repository.AdminAppSettingsRepository
 import com.hanzi.learner.features.admin.repository.AdminDisabledCharRepository
 import com.hanzi.learner.features.admin.repository.AdminIndexRepository
 import com.hanzi.learner.features.admin.repository.AdminPhraseOverrideRepository
@@ -30,7 +28,6 @@ class AdminLearningDataViewModel(
     private val progressQueryRepository: AdminProgressQueryRepository,
     private val progressCommandRepository: AdminProgressCommandRepository,
     private val phraseOverrideRepository: AdminPhraseOverrideRepository,
-    private val appSettingsRepository: AdminAppSettingsRepository,
     private val disabledCharRepository: AdminDisabledCharRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AdminLearningDataUiState())
@@ -57,12 +54,6 @@ class AdminLearningDataViewModel(
     fun clearProgress() {
         runAndRefresh {
             progressCommandRepository.deleteAllProgress()
-        }
-    }
-
-    fun resetSettings() {
-        runAndRefresh {
-            appSettingsRepository.updateSettings(AdminSettings())
         }
     }
 
@@ -99,7 +90,6 @@ class AdminLearningDataViewModel(
         private val progressQueryRepository: AdminProgressQueryRepository,
         private val progressCommandRepository: AdminProgressCommandRepository,
         private val phraseOverrideRepository: AdminPhraseOverrideRepository,
-        private val appSettingsRepository: AdminAppSettingsRepository,
         private val disabledCharRepository: AdminDisabledCharRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -110,7 +100,6 @@ class AdminLearningDataViewModel(
                     progressQueryRepository = progressQueryRepository,
                     progressCommandRepository = progressCommandRepository,
                     phraseOverrideRepository = phraseOverrideRepository,
-                    appSettingsRepository = appSettingsRepository,
                     disabledCharRepository = disabledCharRepository,
                 ) as T
             }
