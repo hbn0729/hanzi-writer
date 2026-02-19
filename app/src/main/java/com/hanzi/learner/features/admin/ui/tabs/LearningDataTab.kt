@@ -25,8 +25,6 @@ fun LearningDataTab(
     allProgress: Map<String, AdminProgress>,
     onClearAll: () -> Unit,
     onClearProgress: () -> Unit,
-    onClearPhraseOverrides: () -> Unit,
-    onClearDisabledChars: () -> Unit,
     onResetSettings: () -> Unit,
     onCleanupOrphanProgress: (List<String>) -> Unit,
     onBack: () -> Unit,
@@ -44,8 +42,6 @@ fun LearningDataTab(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onClearAll) { Text(text = "清空所有学习数据") }
                 Button(onClick = onClearProgress) { Text(text = "清空学习进度") }
-                Button(onClick = onClearPhraseOverrides) { Text(text = "清空短语覆盖") }
-                Button(onClick = onClearDisabledChars) { Text(text = "清空禁用字集合") }
                 Button(onClick = onResetSettings) { Text(text = "重置设置") }
             }
         }

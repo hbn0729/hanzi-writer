@@ -119,8 +119,6 @@ fun LearningDataTabRoute(
         allProgress = state.allProgress,
         onClearAll = { viewModel.clearAll() },
         onClearProgress = { viewModel.clearProgress() },
-        onClearPhraseOverrides = { viewModel.clearPhraseOverrides() },
-        onClearDisabledChars = { viewModel.clearDisabledChars() },
         onResetSettings = { viewModel.resetSettings() },
         onCleanupOrphanProgress = { viewModel.cleanupOrphanProgress(it) },
         onBack = onBack,

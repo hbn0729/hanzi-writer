@@ -60,18 +60,6 @@ class AdminLearningDataViewModel(
         }
     }
 
-    fun clearPhraseOverrides() {
-        runAndRefresh {
-            phraseOverrideRepository.deleteAllPhraseOverrides()
-        }
-    }
-
-    fun clearDisabledChars() {
-        runAndRefresh {
-            disabledCharRepository.deleteAllDisabledChars()
-        }
-    }
-
     fun resetSettings() {
         runAndRefresh {
             appSettingsRepository.updateSettings(AdminSettings())
