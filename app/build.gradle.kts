@@ -80,16 +80,16 @@ dependencies {
 tasks.register<Exec>("generateHanziAssets") {
     workingDir = rootProject.projectDir
     commandLine(
-        "python",
+        "python3",
         "tools/generate_assets.py",
         "--graphics",
-        "../makemeahanzi/graphics.txt",
+        "data/graphics.txt",
         "--dictionary",
-        "../makemeahanzi/dictionary.txt",
+        "data/dictionary.txt",
         "--lesson",
         "app/src/main/assets/lesson_chars.txt",
         "--phrases",
-        "app/src/main/assets/phrases.json",
+        "data/词语表-直接导入即可.json",
         "--out-assets",
         "app/src/main/assets",
     )
