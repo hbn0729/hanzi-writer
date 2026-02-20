@@ -8,7 +8,7 @@
 - **笔画书写练习**：在屏幕上跟随示范书写汉字，系统自动识别笔画准确性
 - **笔画动画演示**：动态展示标准笔顺，帮助用户掌握正确书写顺序
 - **间隔重复算法**：基于 SM-2 算法智能安排复习计划，优化记忆效果
-- **语音朗读**：集成 TTS 引擎，朗读汉字和词语发音
+- **语音朗读**：集成 TTS 引擎。每进入一个汉字的练习界面就会自动朗读汉字和词语发音。点击练习界面的朗读按钮也可以朗读发音。
 
 ### 学习管理
 - **学习进度追踪**：记录每个汉字的书写正确率和练习次数
@@ -73,8 +73,7 @@ hanzi-learner/
 │   ├── char_index.json                 # 汉字索引
 │   ├── lesson_chars.txt                # 课程汉字列表
 │   └── phrases.json                    # 词语配置
-├── data/                               # 原始数据
-│   └── 词语表-直接导入即可.json         # 词语表数据
+├── data/                               # 原始数据，应用内直接导入
 ├── tools/                              # 工具脚本
 │   └── generate_assets.py              # 资源生成工具
 └── app/src/test/                       # 单元测试
@@ -128,18 +127,13 @@ hanzi-learner/
 - `viewmodel/` - 状态管理和业务逻辑编排
 
 ### 5. speech 模块
-语音合成功能，使用 Sherpa-ONNX 本地 TTS 引擎。
+语音合成功能，封装 Android TTS API。
 
 | 文件 | 职责 |
 |------|------|
 | `TtsSpeaker.kt` | TTS 引擎封装和管理 |
 | `TtsSpeakerContract.kt` | 接口定义，便于测试和替换 |
 | `TtsSpeakerComposables.kt` | Compose 集成组件 |
-
-**TTS 模型文件** (位于 `app/src/main/assets/tts_models/`):
-- `vits-zh-hf-fanchen-wnj.onnx` - 主模型文件 (~100MB)
-- `tokens.txt`, `lexicon.txt` - 模型配置
-- `dict/` - 分词词典数据
 
 ## 如何扩展功能
 
@@ -212,19 +206,14 @@ hanzi-learner/
 1. **在 `app/src/test/` 创建测试类**
    - 遵循现有测试的命名规范：`XxxTest.kt`
 
-2. **使用测试工具**
-   - JUnit 4 进行基础断言
-   - Turbine 测试 Kotlin Flow
-   - Kotlin Coroutines Test 测试异步代码
-
-3. **架构测试**
+2. **架构测试**
    - 在 `architecture/ArchitectureGuardrailsTest.kt` 中添加架构约束
 
 ## 数据资源说明
 
 ### 汉字数据来源
 - 使用 Makemeahanzi 项目的开源数据
-- 笔画数据以 JSON 格式存储在 `app/src/main/assets/char_data/`
+- 内置初始笔画数据以 JSON 格式存储在 `app/src/main/assets/char_data/`
 - 每个汉字一个文件，命名格式：`u{codepoint}.json`
 
 ### 资源生成
@@ -234,10 +223,10 @@ hanzi-learner/
 ```
 
 ### 词语表格式
+键之间不要包含空格
 ```json
 {
-  "字": ["词语1", "词语2"],
-  ...
+  "字": ["词语1", "词语2"], ...
 }
 ```
 
@@ -248,23 +237,15 @@ hanzi-learner/
 - JDK 11 或更高
 - Android SDK 33
 
-### 构建依赖
-
-**Sherpa-ONNX 库** (`app/libs/sherpa-onnx-1.12.25.aar`):
-该 AAR 文件已包含在仓库中，无需额外下载。如果文件缺失，可以从 [sherpa-onnx releases](https://github.com/k2-fsa/sherpa-onnx/releases) 下载对应版本并放入 `app/libs/` 目录。
-
 ### 构建命令
 ```bash
 # 调试构建
 ./gradlew assembleDebug
-
+# 发行构建
+./gradlew assemblerelease
 # 运行测试
 ./gradlew test
 
 # 生成资源
 ./gradlew generateHanziAssets
 ```
-
-## 许可证
-
-[添加您的许可证信息]

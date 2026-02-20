@@ -41,17 +41,10 @@ internal class PcmFloatAudioPlayer : AudioPlayerContract {
             AudioManager.AUDIO_SESSION_ID_GENERATE
         )
         Log.d(TAG, "AudioTrack created: $audioTrack")
-        audioTrack?.play()
-        Log.d(TAG, "AudioTrack playing")
     }
 
     override fun play(samples: FloatArray) {
         Log.d(TAG, "Playing ${samples.size} samples")
-        
-        if (audioTrack?.playState != AudioTrack.PLAYSTATE_PLAYING) {
-            Log.d(TAG, "Restarting playback")
-            audioTrack?.play()
-        }
         
         val shortSamples = ShortArray(samples.size) { i ->
             (samples[i] * Short.MAX_VALUE).toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
@@ -59,12 +52,16 @@ internal class PcmFloatAudioPlayer : AudioPlayerContract {
         
         val written = audioTrack?.write(shortSamples, 0, shortSamples.size, AudioTrack.WRITE_BLOCKING) ?: -1
         Log.d(TAG, "Written $written samples")
+        
+        if (audioTrack?.playState != AudioTrack.PLAYSTATE_PLAYING) {
+            Log.d(TAG, "Starting playback")
+            audioTrack?.play()
+        }
     }
 
     override fun stop() {
         Log.d(TAG, "Stopping")
         audioTrack?.stop()
-        audioTrack?.reloadStaticData()
     }
 
     override fun release() {

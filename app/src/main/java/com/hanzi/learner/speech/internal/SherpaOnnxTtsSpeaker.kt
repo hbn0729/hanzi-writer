@@ -9,7 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private const val TAG = "SherpaOnnxTtsSpeaker"
@@ -20,8 +22,10 @@ internal class SherpaOnnxTtsSpeaker(
 ) : TtsSpeakerContract {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var currentJob: Job? = null
+    private var isPlayerReady = false
 
-    override val isReady: StateFlow<Boolean> = engine.isReady
+    private val _isReady = MutableStateFlow(false)
+    override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
     private data class PendingRequest(
         val type: RequestType,
@@ -43,33 +47,43 @@ internal class SherpaOnnxTtsSpeaker(
             engine.initialize()
             Log.d(TAG, "Engine initialized, initializing player with sampleRate: ${engine.getSampleRate()}")
             player.initialize(engine.getSampleRate())
-            Log.d(TAG, "Player initialized, isReady: ${engine.isReady.value}")
+            isPlayerReady = true
+            updateReadyState()
+            Log.d(TAG, "Player initialized, isReady: ${_isReady.value}")
         }
 
         scope.launch {
-            engine.isReady.collect { ready ->
-                if (ready) {
-                    val pending = pendingRequest
-                    if (pending != null) {
-                        Log.d(TAG, "TTS is now ready, playing pending request: $pending")
-                        pendingRequest = null
-                        when (pending.type) {
-                            RequestType.SPEAK -> executeSpeak(pending.text)
-                            RequestType.SPEAK_CHARACTER_AND_PHRASE -> executeSpeakCharacterAndPhrase(
-                                pending.character,
-                                pending.phrase
-                            )
-                        }
-                    }
+            engine.isReady.collect {
+                updateReadyState()
+            }
+        }
+    }
+
+    private fun updateReadyState() {
+        val wasReady = _isReady.value
+        val nowReady = engine.isReady.value && isPlayerReady
+        _isReady.value = nowReady
+
+        if (!wasReady && nowReady) {
+            val pending = pendingRequest
+            if (pending != null) {
+                Log.d(TAG, "TTS is now fully ready, playing pending request: $pending")
+                pendingRequest = null
+                when (pending.type) {
+                    RequestType.SPEAK -> executeSpeak(pending.text)
+                    RequestType.SPEAK_CHARACTER_AND_PHRASE -> executeSpeakCharacterAndPhrase(
+                        pending.character,
+                        pending.phrase
+                    )
                 }
             }
         }
     }
 
     override fun speak(text: String) {
-        Log.d(TAG, "speak() called: $text, isReady: ${engine.isReady.value}")
-        if (!engine.isReady.value) {
-            Log.w(TAG, "Engine not ready, queuing speak request")
+        Log.d(TAG, "speak() called: $text, isReady: ${_isReady.value}")
+        if (!_isReady.value) {
+            Log.w(TAG, "Speaker not ready, queuing speak request")
             pendingRequest = PendingRequest(RequestType.SPEAK, text = text)
             return
         }
@@ -90,9 +104,9 @@ internal class SherpaOnnxTtsSpeaker(
     }
 
     override fun speakCharacterAndPhrase(character: String, phrase: String) {
-        Log.d(TAG, "speakCharacterAndPhrase() called: '$character', '$phrase', isReady: ${engine.isReady.value}")
-        if (!engine.isReady.value) {
-            Log.w(TAG, "Engine not ready, queuing speakCharacterAndPhrase request")
+        Log.d(TAG, "speakCharacterAndPhrase() called: '$character', '$phrase', isReady: ${_isReady.value}")
+        if (!_isReady.value) {
+            Log.w(TAG, "Speaker not ready, queuing speakCharacterAndPhrase request")
             pendingRequest = PendingRequest(
                 RequestType.SPEAK_CHARACTER_AND_PHRASE,
                 character = character,

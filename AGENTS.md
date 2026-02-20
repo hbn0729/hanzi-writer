@@ -45,7 +45,10 @@ Android Hanzi learning app (Kotlin + Compose + Room + manual DI). Core domain is
 | `ArchitectureGuardrailsTest` | test class | `.../architecture/ArchitectureGuardrailsTest.kt` | high | enforces layer boundaries |
 
 ## MUST DO(ENFORCED)
-- Before each coding session, you must call mcp-tools "context7" to supplement the context.
+- Before each coding session, query relevant library docs via Context7:
+  1. `context7_resolve-library-id(libraryName="<lib>", query="<task description>")` → get library ID
+  2. `context7_query-docs(libraryId="<id>", query="<specific question>")` → fetch docs
+- Example: For Room database work, first call `context7_resolve-library-id(libraryName="room", query="Room database migration")`, then `context7_query-docs(libraryId="/androidx/room", query="how to write migration")`
 
 ## CONVENTIONS
 - Prefer contract/port types at boundaries (`*Contract`, provider interfaces) over concrete implementations.
