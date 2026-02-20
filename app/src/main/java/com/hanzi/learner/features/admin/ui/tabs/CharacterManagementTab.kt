@@ -1,6 +1,7 @@
 package com.hanzi.learner.features.admin.ui.tabs
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
@@ -226,7 +228,10 @@ private fun FilterModeRow(
     fun label(mode: CharFilterMode, text: String): String {
         return if (mode == filterMode) "[$text]" else text
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.ALL) }) { Text(text = label(CharFilterMode.ALL, "全部")) }
         OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.DUE) }) { Text(text = label(CharFilterMode.DUE, "到期")) }
         OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.LEARNED) }) { Text(text = label(CharFilterMode.LEARNED, "已学")) }
@@ -296,7 +301,10 @@ private fun SelectedCharacterDetails(
         progress?.let { p ->
             Text(text = "正确次数=${p.correctCount} 错误笔画=${p.wrongCount}")
             Text(text = "上次学习日=${epochDayToText(p.lastStudiedDay)} 下次复习日=${epochDayToText(p.nextDueDay)} 间隔=${p.intervalDays}天")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
                 Button(onClick = { onMarkDueToday(listOf(char)) }) { Text(text = "今天复习") }
                 Button(onClick = { onResetWrongCount(listOf(char)) }) { Text(text = "清零错误") }
                 Button(onClick = { onResetProgress(listOf(char)) }) { Text(text = "清零进度") }
