@@ -16,7 +16,7 @@ libs/
 
 tts_models/
 
-AGENTS.md
+
 # Kotlin
 .kotlin/
 kotlin-lsp-*.zip

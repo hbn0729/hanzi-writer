@@ -64,29 +64,43 @@ fun CharacterManagementTab(
     var searchText by remember { mutableStateOf("") }
     var filterMode by remember { mutableStateOf(CharFilterMode.ALL) }
     var selectedChars by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val pageSize = 200
+    var visibleCount by remember { mutableStateOf(pageSize) }
 
-    val filteredItems = remember(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay) {
-        indexItems.asSequence().filter { item ->
-            val ch = item.char
-            val p = allProgress[ch]
-            val isDisabled = ch in disabledChars
-            val isLearned = p != null
-            val isDue = p != null && p.nextDueDay <= todayEpochDay
-            val searchOk = searchText.isBlank() ||
-                ch.contains(searchText) ||
-                item.pinyin.any { it.contains(searchText, ignoreCase = true) } ||
-                item.strokeCount.toString() == searchText
+    fun matchesFilter(item: CharIndexItem): Boolean {
+        val ch = item.char
+        val p = allProgress[ch]
+        val isDisabled = ch in disabledChars
+        val isLearned = p != null
+        val isDue = p != null && p.nextDueDay <= todayEpochDay
+        val searchOk = searchText.isBlank() ||
+            ch.contains(searchText) ||
+            item.pinyin.any { it.contains(searchText, ignoreCase = true) } ||
+            item.strokeCount.toString() == searchText
 
-            val filterOk = when (filterMode) {
-                CharFilterMode.ALL -> true
-                CharFilterMode.DUE -> isDue
-                CharFilterMode.LEARNED -> isLearned
-                CharFilterMode.UNLEARNED -> !isLearned
-                CharFilterMode.DISABLED -> isDisabled
-            }
+        val filterOk = when (filterMode) {
+            CharFilterMode.ALL -> true
+            CharFilterMode.DUE -> isDue
+            CharFilterMode.LEARNED -> isLearned
+            CharFilterMode.UNLEARNED -> !isLearned
+            CharFilterMode.DISABLED -> isDisabled
+        }
 
-            searchOk && filterOk
-        }.toList()
+        return searchOk && filterOk
+    }
+
+    val totalCount = remember(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay) {
+        indexItems.count { matchesFilter(it) }
+    }
+
+    val displayCount = visibleCount.coerceAtMost(totalCount)
+
+    val visibleItems = remember(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay, displayCount) {
+        indexItems.asSequence().filter { matchesFilter(it) }.take(displayCount).toList()
+    }
+
+    androidx.compose.runtime.LaunchedEffect(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay, totalCount) {
+        visibleCount = minOf(pageSize, totalCount)
     }
 
     LazyColumn(
@@ -150,9 +164,12 @@ fun CharacterManagementTab(
         }
 
         item { Divider() }
-        item { Text(text = "字表（${filteredItems.size}）") }
+        item { Text(text = "字表（$totalCount）") }
+        if (totalCount > displayCount) {
+            item { Text(text = "已显示 $displayCount / $totalCount") }
+        }
 
-        items(filteredItems, key = { it.char }) { item ->
+        items(visibleItems, key = { it.char }) { item ->
             val ch = item.char
             val p = allProgress[ch]
             val enabled = ch !in disabledChars
@@ -175,6 +192,23 @@ fun CharacterManagementTab(
                 onToggleEnabled = onToggleEnabled,
             )
             Divider()
+        }
+
+        if (totalCount > displayCount) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            visibleCount = (visibleCount + pageSize).coerceAtMost(totalCount)
+                        },
+                    ) {
+                        Text(text = "加载更多（+$pageSize）")
+                    }
+                }
+            }
         }
 
         item {
