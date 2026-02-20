@@ -8,7 +8,7 @@ import com.hanzi.learner.speech.contract.TtsSpeakerContract
 
 @Composable
 fun rememberTtsSpeaker(context: Context): TtsSpeakerContract {
-    val speaker = remember(context) { SpeechModule.createTtsSpeaker(context) }
+    val speaker = remember(context) { SpeechModule.createTtsSpeakerWithFallback(context) }
     DisposableEffect(speaker) {
         onDispose { speaker.shutdown() }
     }

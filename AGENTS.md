@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-20T11:09:29+08:00  
+**Generated:** 2026-02-20T21:04:53+08:00  
 **Commit:** e5e0be7  
 **Branch:** main
 
@@ -32,6 +32,7 @@ Android Hanzi learning app (Kotlin + Compose + Room + manual DI). Core domain is
 | Data persistence | `app/src/main/java/com/hanzi/learner/data/local` + `data/repository` | Contracts first, impl second |
 | Writing algorithm | `character_writer/match`, `character_writer/render` | Performance-sensitive paths |
 | Asset pipeline | `tools/generate_assets.py`, `app/build.gradle.kts` task `generateHanziAssets` | Source-of-truth is `/data`, not generated assets |
+| Speech/TTS | `speech/`, `speech/internal` | TTS contracts + implementations, fallback support |
 | Architecture policy | `app/src/test/java/com/hanzi/learner/architecture/ArchitectureGuardrailsTest.kt` | Encodes forbidden dependency directions |
 
 ## CODE MAP
@@ -43,6 +44,10 @@ Android Hanzi learning app (Kotlin + Compose + Room + manual DI). Core domain is
 | `PracticeViewModel` | class | `.../features/practice/viewmodel/PracticeViewModel.kt` | high | practice state orchestration |
 | `AdminScreen` | composable | `.../features/admin/ui/AdminScreen.kt` | medium | admin feature entry UI |
 | `ArchitectureGuardrailsTest` | test class | `.../architecture/ArchitectureGuardrailsTest.kt` | high | enforces layer boundaries |
+| `TtsSpeakerContract` | interface | `.../speech/contract/TtsSpeakerContract.kt` | medium | TTS abstraction |
+| `SpeechModule` | object | `.../speech/SpeechModule.kt` | medium | TTS factory |
+| `FallbackTtsSpeaker` | class | `.../speech/internal/FallbackTtsSpeaker.kt` | medium | system TTS with fallback |
+| `SystemTtsSpeaker` | class | `.../speech/internal/SystemTtsSpeaker.kt` | medium | Android system TTS |
 
 ## MUST DO(ENFORCED)
 - Before each coding session, query relevant library docs via Context7:
@@ -88,3 +93,34 @@ Android Hanzi learning app (Kotlin + Compose + Room + manual DI). Core domain is
 ## NOTES
 - `rg`/`python` may be unavailable in some local shells; rely on Gradle and Kotlin toolchain for core workflows.
 - `ArchitectureGuardrailsTest` is the strongest source of truth for allowed dependencies.
+
+## SPEECH MODULE
+
+### Overview
+TTS module with automatic fallback: tries system TTS first (Chinese support), falls back to built-in SherpaOnnx if unavailable.
+
+### Files
+| File | Role |
+|------|------|
+| `speech/SpeechModule.kt` | Factory for creating TTS speakers |
+| `speech/TtsSpeakerComposables.kt` | Compose integration (`rememberTtsSpeaker`) |
+| `speech/contract/TtsSpeakerContract.kt` | High-level TTS interface |
+| `speech/contract/TtsEngineContract.kt` | Low-level TTS engine interface |
+| `speech/internal/SystemTtsSpeaker.kt` | Android system TTS adapter |
+| `speech/internal/FallbackTtsSpeaker.kt` | Smart fallback wrapper |
+| `speech/internal/SherpaOnnxTtsSpeaker.kt` | Built-in SherpaOnnx TTS |
+
+### Usage
+```kotlin
+@Composable
+fun MyScreen(context: Context) {
+    val speaker = rememberTtsSpeaker(context)  // auto-fallback
+    speaker.speakCharacterAndPhrase("汉", "汉字")
+}
+```
+
+### Fallback Logic
+1. App starts → `FallbackTtsSpeaker` initializes
+2. Try system TTS (max 3s timeout)
+3. If system TTS has Chinese support → use it
+4. Else → use built-in SherpaOnnx TTS

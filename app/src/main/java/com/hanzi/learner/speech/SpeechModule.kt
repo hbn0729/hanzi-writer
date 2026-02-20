@@ -4,14 +4,11 @@ import android.content.Context
 import com.hanzi.learner.speech.contract.AudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsEngineContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
+import com.hanzi.learner.speech.internal.FallbackTtsSpeaker
 import com.hanzi.learner.speech.internal.PcmFloatAudioPlayer
 import com.hanzi.learner.speech.internal.SherpaOnnxTtsEngine
 import com.hanzi.learner.speech.internal.SherpaOnnxTtsSpeaker
 
-/**
- * Factory for creating TTS components.
- * Centralizes dependency creation for the speech module.
- */
 object SpeechModule {
 
     data class TtsConfig(
@@ -44,5 +41,9 @@ object SpeechModule {
             engine = engine,
             player = player,
         )
+    }
+
+    fun createTtsSpeakerWithFallback(context: Context, config: TtsConfig = TtsConfig()): TtsSpeakerContract {
+        return FallbackTtsSpeaker(context, config)
     }
 }

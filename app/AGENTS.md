@@ -19,3 +19,12 @@ Android application module `:app`; owns runtime code, assets, manifests, and app
 ## ANTI-PATTERNS
 - Do not hardcode alternate build commands when Gradle wrapper exists.
 - Do not treat `app/src/main/assets/char_data` as hand-edited source.
+
+## SPEECH MODULE
+| Task | Location | Notes |
+|---|---|---|
+| Add new TTS engine | `speech/internal/` | Implement `TtsSpeakerContract`, use existing contracts |
+| Modify fallback logic | `speech/internal/FallbackTtsSpeaker.kt` | Controls system vs built-in TTS selection |
+| Change TTS config | `speech/SpeechModule.kt` | Model paths, speaker settings |
+
+See root `AGENTS.md` for detailed documentation.
