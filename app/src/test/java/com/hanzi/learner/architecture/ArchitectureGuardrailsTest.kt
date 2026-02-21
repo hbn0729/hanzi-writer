@@ -220,4 +220,85 @@ class ArchitectureGuardrailsTest {
             fail("db package must not import feature package. Violations:\n${violations.joinToString("\n")}")
         }
     }
+
+    @Test
+    fun uiLayer_mustNotImportTtsModelDownloadManagerImpl() {
+        val base = projectRoot().resolve("app/src/main/java/com/hanzi/learner")
+        val uiFiles = kotlinFilesUnder(base).filter {
+            it.invariantSeparatorsPathString.contains("/ui/") &&
+                !it.invariantSeparatorsPathString.endsWith("/ui/AppContainer.kt") &&
+                !it.invariantSeparatorsPathString.endsWith("/ui/AppModules.kt")
+        }
+
+        val importRegex = Regex("^import\\s+com\\.hanzi\\.learner\\.speech\\.internal\\.TtsModelDownloadManager\\s*$", RegexOption.MULTILINE)
+        val violations = uiFiles.filter { file -> importRegex.containsMatchIn(String(Files.readAllBytes(file))) }
+            .map { it.invariantSeparatorsPathString }
+
+        if (violations.isNotEmpty()) {
+            fail("UI layer must not import TtsModelDownloadManager concrete class. Use TtsModelDownloadManagerContract instead. Violations:\n${violations.joinToString("\n")}")
+        }
+    }
+
+    @Test
+    fun uiLayer_mustNotImportTtsPreferenceRepositoryImpl() {
+        val base = projectRoot().resolve("app/src/main/java/com/hanzi/learner")
+        val uiFiles = kotlinFilesUnder(base).filter {
+            it.invariantSeparatorsPathString.contains("/ui/") &&
+                !it.invariantSeparatorsPathString.endsWith("/ui/AppContainer.kt") &&
+                !it.invariantSeparatorsPathString.endsWith("/ui/AppModules.kt")
+        }
+
+        val importRegex = Regex("^import\\s+com\\.hanzi\\.learner\\.data\\.repository\\.TtsPreferenceRepository\\s*$", RegexOption.MULTILINE)
+        val violations = uiFiles.filter { file -> importRegex.containsMatchIn(String(Files.readAllBytes(file))) }
+            .map { it.invariantSeparatorsPathString }
+
+        if (violations.isNotEmpty()) {
+            fail("UI layer must not import TtsPreferenceRepository concrete class. Use TtsPreferenceRepositoryContract instead. Violations:\n${violations.joinToString("\n")}")
+        }
+    }
+
+    @Test
+    fun speechModelPackage_mustNotImportAndroidFramework() {
+        val base = projectRoot().resolve("app/src/main/java/com/hanzi/learner/speech/model")
+        if (!Files.exists(base)) return
+
+        val androidImportRegex = Regex("^import\\s+android\\.\\S+\\s*$", RegexOption.MULTILINE)
+        val violations = kotlinFilesUnder(base).filter { file ->
+            androidImportRegex.containsMatchIn(String(Files.readAllBytes(file)))
+        }.map { it.invariantSeparatorsPathString }
+
+        if (violations.isNotEmpty()) {
+            fail("speech/model package must not import Android framework classes. Violations:\n${violations.joinToString("\n")}")
+        }
+    }
+
+    @Test
+    fun adminViewModels_mustNotImportCompose() {
+        val base = projectRoot().resolve("app/src/main/java/com/hanzi/learner/features/admin/viewmodel")
+        if (!Files.exists(base)) return
+
+        val importRegex = Regex("^import\\s+androidx\\.compose\\..+$", RegexOption.MULTILINE)
+        val violations = kotlinFilesUnder(base).filter { file ->
+            importRegex.containsMatchIn(String(Files.readAllBytes(file)))
+        }.map { it.invariantSeparatorsPathString }
+
+        if (violations.isNotEmpty()) {
+            fail("features/admin/viewmodel must not import Compose APIs. Violations:\n${violations.joinToString("\n")}")
+        }
+    }
+
+    @Test
+    fun practiceUi_mustNotImportSpeechDownloadImpl() {
+        val base = projectRoot().resolve("app/src/main/java/com/hanzi/learner/features/practice/ui")
+        if (!Files.exists(base)) return
+
+        val importRegex = Regex("^import\\s+com\\.hanzi\\.learner\\.speech\\.internal\\.TtsModelDownloadManager\\s*$", RegexOption.MULTILINE)
+        val violations = kotlinFilesUnder(base).filter { file ->
+            importRegex.containsMatchIn(String(Files.readAllBytes(file)))
+        }.map { it.invariantSeparatorsPathString }
+
+        if (violations.isNotEmpty()) {
+            fail("features/practice/ui must not import speech/download concrete classes. Violations:\n${violations.joinToString("\n")}")
+        }
+    }
 }
