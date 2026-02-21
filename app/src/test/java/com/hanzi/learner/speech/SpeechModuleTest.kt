@@ -18,10 +18,10 @@ class SpeechModuleTest {
     fun `TtsConfig should have correct default values`() {
         val config = SpeechModule.TtsConfig()
 
-        assertEquals("tts_models/vits-zh-hf-fanchen-wnj.onnx", config.modelPath)
-        assertEquals("tts_models/tokens.txt", config.tokensPath)
-        assertEquals("tts_models/lexicon.txt", config.lexiconPath)
-        assertEquals("tts_models/dict", config.dictDir)
+        assertEquals("", config.modelPath)
+        assertEquals("", config.tokensPath)
+        assertEquals("", config.lexiconPath)
+        assertEquals("", config.dictDir)
         assertEquals(0, config.speakerId)
         assertEquals(1.0f, config.speed, 0.01f)
         assertFalse(config.useFilesystem)
