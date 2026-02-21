@@ -74,7 +74,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.5.2")
     ksp("androidx.room:room-compiler:2.5.2")
 
-    implementation(files("libs/sherpa-onnx-1.12.25.aar"))
+//    implementation(files("libs/sherpa-onnx-1.12.25.aar"))
 }
 
 tasks.register<Exec>("generateHanziAssets") {

@@ -3,10 +3,10 @@ package com.hanzi.learner.speech.internal
 import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
-import com.k2fsa.sherpa.onnx.OfflineTts
-import com.k2fsa.sherpa.onnx.OfflineTtsConfig
-import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
-import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
+//import com.k2fsa.sherpa.onnx.OfflineTts
+//import com.k2fsa.sherpa.onnx.OfflineTtsConfig
+//import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
+//import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
 import com.hanzi.learner.speech.contract.TtsEngineContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +24,7 @@ internal class SherpaOnnxTtsEngine(
     private val defaultSpeakerId: Int = 0,
     private val defaultSpeed: Float = 1.0f,
 ) : TtsEngineContract {
-    private var tts: OfflineTts? = null
+    //private var tts: OfflineTts? = null
     private var cachedSampleRate: Int = 16000
     private val _isReady = MutableStateFlow(false)
     override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
@@ -35,58 +35,63 @@ internal class SherpaOnnxTtsEngine(
         val tokensPath: String? = null,
         val dataDir: String? = null,
         val dictDir: String? = null,
+        val useFilesystem: Boolean = false,
     )
 
     override suspend fun initialize() {
         withContext(Dispatchers.IO) {
             try {
                 Log.d(TAG, "Initializing TTS with assets directly")
-                
-                val config = buildTtsConfig()
-                Log.d(TAG, "Creating OfflineTts with config: $config")
-                
-                tts = OfflineTts(
-                    assetManager = context.assets,
-                    config = config
-                )
-                
-                cachedSampleRate = tts?.sampleRate() ?: 16000
+
+                //val config = buildTtsConfig()
+                Log.d(TAG, "Creating OfflineTts with config")
+
+//                tts = if (modelConfig.useFilesystem) {
+//                    OfflineTts(config = config)
+//                } else {
+//                    OfflineTts(
+//                        assetManager = context.assets,
+//                        config = config
+//                    )
+//                }
+
+                //cachedSampleRate = tts?.sampleRate() ?: 16000
                 Log.d(TAG, "TTS initialized, sampleRate: $cachedSampleRate")
-                
+
                 _isReady.value = true
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize TTS", e)
             }
         }
     }
-    
-    private fun buildTtsConfig(): OfflineTtsConfig {
-        val vitsConfig = OfflineTtsVitsModelConfig(
-            model = modelConfig.modelPath,
-            lexicon = modelConfig.lexiconPath ?: "",
-            tokens = modelConfig.tokensPath ?: "",
-            dataDir = modelConfig.dataDir ?: "",
-            dictDir = modelConfig.dictDir ?: "",
-            noiseScale = 0.667f,
-            noiseScaleW = 0.8f,
-            lengthScale = 1.0f,
-        )
 
-        val modelCfg = OfflineTtsModelConfig(
-            vits = vitsConfig,
-            numThreads = 2,
-            debug = false,
-            provider = "cpu",
-        )
-
-        return OfflineTtsConfig(
-            model = modelCfg,
-            ruleFsts = "",
-            ruleFars = "",
-            maxNumSentences = 2,
-            silenceScale = 0.0f,
-        )
-    }
+//    private fun buildTtsConfig(): OfflineTtsConfig {
+//        val vitsConfig = OfflineTtsVitsModelConfig(
+//            model = modelConfig.modelPath,
+//            lexicon = modelConfig.lexiconPath ?: "",
+//            tokens = modelConfig.tokensPath ?: "",
+//            dataDir = modelConfig.dataDir ?: "",
+//            dictDir = modelConfig.dictDir ?: "",
+//            noiseScale = 0.667f,
+//            noiseScaleW = 0.8f,
+//            lengthScale = 1.0f,
+//        )
+//
+//        val modelCfg = OfflineTtsModelConfig(
+//            vits = vitsConfig,
+//            numThreads = 2,
+//            debug = false,
+//            provider = "cpu",
+//        )
+//
+//        return OfflineTtsConfig(
+//            model = modelCfg,
+//            ruleFsts = "",
+//            ruleFars = "",
+//            maxNumSentences = 2,
+//            silenceScale = 0.0f,
+//        )
+//    }
 
     private fun copyAssetsToDir(destDir: File) {
         copyAssetTree(context.assets, "", destDir)
@@ -134,18 +139,19 @@ internal class SherpaOnnxTtsEngine(
     ): FloatArray? = withContext(Dispatchers.IO) {
         val actualSpeakerId = if (speakerId < 0) defaultSpeakerId else speakerId
         val actualSpeed = if (speed <= 0) defaultSpeed else speed
-        val ttsInstance = tts
-        if (ttsInstance == null) {
-            Log.e(TAG, "TTS not initialized")
-            return@withContext null
-        }
-        
+//        val ttsInstance = tts
+//        if (ttsInstance == null) {
+//            Log.e(TAG, "TTS not initialized")
+//            return@withContext null
+//        }
+
         try {
             Log.d(TAG, "Synthesizing: '$text', sid: $actualSpeakerId, speed: $actualSpeed")
-            val audio = ttsInstance.generate(text = text, sid = actualSpeakerId, speed = actualSpeed)
-            Log.d(TAG, "Generated audio: ${audio.samples.size} samples")
-            
-            if (audio.samples.isNotEmpty()) audio.samples else null
+            //val audio = ttsInstance.generate(text = text, sid = actualSpeakerId, speed = actualSpeed)
+            //Log.d(TAG, "Generated audio: ${audio.samples.size} samples")
+
+            //if (audio.samples.isNotEmpty()) audio.samples else null
+            null
         } catch (e: Exception) {
             Log.e(TAG, "Synthesis failed for: $text", e)
             null
@@ -155,8 +161,8 @@ internal class SherpaOnnxTtsEngine(
     override fun getSampleRate(): Int = cachedSampleRate
 
     override fun shutdown() {
-        tts?.release()
-        tts = null
+        //tts?.release()
+        //tts = null
         _isReady.value = false
     }
 }

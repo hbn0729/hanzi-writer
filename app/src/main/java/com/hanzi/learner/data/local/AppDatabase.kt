@@ -10,10 +10,12 @@ import com.hanzi.learner.data.local.dao.AppSettingsDao
 import com.hanzi.learner.data.local.dao.DisabledCharDao
 import com.hanzi.learner.data.local.dao.HanziProgressDao
 import com.hanzi.learner.data.local.dao.PhraseOverrideDao
+import com.hanzi.learner.data.local.dao.TtsPreferenceDao
 import com.hanzi.learner.data.local.entity.AppSettingsEntity
 import com.hanzi.learner.data.local.entity.DisabledCharEntity
 import com.hanzi.learner.data.local.entity.HanziProgressEntity
 import com.hanzi.learner.data.local.entity.PhraseOverrideEntity
+import com.hanzi.learner.data.local.entity.TtsPreferenceEntity
 
 @Database(
     entities = [
@@ -21,8 +23,9 @@ import com.hanzi.learner.data.local.entity.PhraseOverrideEntity
         PhraseOverrideEntity::class,
         DisabledCharEntity::class,
         AppSettingsEntity::class,
+        TtsPreferenceEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun phraseOverrideDao(): PhraseOverrideDao
     abstract fun disabledCharDao(): DisabledCharDao
     abstract fun appSettingsDao(): AppSettingsDao
+    abstract fun ttsPreferenceDao(): TtsPreferenceDao
 
     companion object {
         @Volatile
@@ -57,13 +61,21 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `tts_preference` (`id` INTEGER NOT NULL, `selectedModelId` TEXT, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "hanzi_learner.db",
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
             }
         }
     }
