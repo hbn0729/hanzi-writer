@@ -24,10 +24,10 @@ import kotlinx.coroutines.flow.map
 object SpeechModule {
 
     data class TtsConfig(
-        val modelPath: String = "tts_models/vits-zh-hf-fanchen-wnj.onnx",
-        val tokensPath: String = "tts_models/tokens.txt",
-        val lexiconPath: String = "tts_models/lexicon.txt",
-        val dictDir: String = "tts_models/dict",
+        val modelPath: String = "",
+        val tokensPath: String = "",
+        val lexiconPath: String = "",
+        val dictDir: String = "",
         val speakerId: Int = 0,
         val speed: Float = 1.0f,
         val useFilesystem: Boolean = false,
