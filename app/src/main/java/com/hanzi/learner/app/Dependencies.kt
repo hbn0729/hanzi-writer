@@ -23,6 +23,10 @@ import com.hanzi.learner.features.practice.domain.CompletePracticeCharacterUseCa
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
 import com.hanzi.learner.character_writer.match.StrokeMatcherContract
 
+import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
+import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
+import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+
 interface HomeFeatureDependencies {
     val progressRepository: ProgressRepositoryContract
     val appSettingsRepository: AppSettingsRepositoryContract
@@ -34,6 +38,9 @@ interface PracticeFeatureDependencies {
     val practiceSessionEngineFactory: PracticeSessionEngineFactory
     val completePracticeCharacterUseCase: CompletePracticeCharacterUseCase
     val strokeMatcher: StrokeMatcherContract
+    val ttsPreferenceRepository: TtsPreferenceRepositoryContract
+    val ttsDownloadManager: TtsModelDownloadManagerContract
+    val previewAudioPlayer: PreviewAudioPlayerContract
 }
 
 interface AdminFeatureDependencies {

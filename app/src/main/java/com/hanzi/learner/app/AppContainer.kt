@@ -4,6 +4,8 @@ import android.content.Context
 import com.hanzi.learner.data.repository.AppSettingsRepositoryContract
 import com.hanzi.learner.data.repository.DisabledCharRepositoryContract
 import com.hanzi.learner.data.repository.ProgressRepositoryContract
+import com.hanzi.learner.data.repository.TtsPreferenceRepository
+import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.data.model.TimeProvider
 import com.hanzi.learner.features.admin.domain.AdminCharacterDataLoader
 import com.hanzi.learner.features.admin.domain.AdminDashboardDataLoader
@@ -23,6 +25,10 @@ import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import com.hanzi.learner.features.practice.domain.CompletePracticeCharacterUseCase
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
 import com.hanzi.learner.character_writer.match.StrokeMatcherContract
+import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
+import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.internal.PreviewAudioPlayer
+import com.hanzi.learner.speech.internal.TtsModelDownloadManager
 
 class AppContainer(
     context: Context,
@@ -41,6 +47,18 @@ class AppContainer(
         characterRepositoryProvider = practiceModule.characterRepositoryProvider,
     )
 
+    private val _ttsPreferenceRepository: TtsPreferenceRepositoryContract = TtsPreferenceRepository(
+        dao = coreDataModule.database.ttsPreferenceDao(),
+    )
+
+    private val _ttsDownloadManager: TtsModelDownloadManagerContract = TtsModelDownloadManager(
+        context = context.applicationContext,
+    )
+
+    private val _previewAudioPlayer: PreviewAudioPlayerContract = PreviewAudioPlayer(
+        context = context.applicationContext,
+    )
+
     override val progressRepository: ProgressRepositoryContract = coreDataModule.progressRepository
     override val appSettingsRepository: AppSettingsRepositoryContract = coreDataModule.appSettingsRepository
     override val disabledCharRepository: DisabledCharRepositoryContract = coreDataModule.disabledCharRepository
@@ -50,6 +68,9 @@ class AppContainer(
     override val completePracticeCharacterUseCase: CompletePracticeCharacterUseCase =
         practiceModule.completePracticeCharacterUseCase
     override val strokeMatcher: StrokeMatcherContract = practiceModule.strokeMatcher
+    override val ttsPreferenceRepository: TtsPreferenceRepositoryContract = _ttsPreferenceRepository
+    override val ttsDownloadManager: TtsModelDownloadManagerContract = _ttsDownloadManager
+    override val previewAudioPlayer: PreviewAudioPlayerContract = _previewAudioPlayer
 
     override val timeProvider: TimeProvider = coreDataModule.timeProvider
     override val adminIndexRepository: AdminIndexRepository = adminModule.adminIndexRepository
