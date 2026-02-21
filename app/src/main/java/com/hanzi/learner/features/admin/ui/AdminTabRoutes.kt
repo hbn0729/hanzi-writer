@@ -17,11 +17,13 @@ import com.hanzi.learner.features.admin.ui.tabs.CharacterManagementTab
 import com.hanzi.learner.features.admin.ui.tabs.LearningDataTab
 import com.hanzi.learner.features.admin.ui.tabs.OverviewTab
 import com.hanzi.learner.features.admin.ui.tabs.SettingsTab
+import com.hanzi.learner.features.admin.ui.tabs.TtsModelTab
 import com.hanzi.learner.features.admin.viewmodel.AdminBackupViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminCharacterViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminDashboardViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminLearningDataViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminSettingsViewModel
+import com.hanzi.learner.features.admin.viewmodel.AdminTtsViewModel
 import com.hanzi.learner.character_writer.data.CharIndexItem
 
 @Composable
@@ -219,6 +221,35 @@ fun BackupTabRoute(
                 arrayOf("text/plain", "application/json", "text/csv", "application/csv", "application/octet-stream", "*/*")
             )
         },
+        onBack = onBack,
+    )
+}
+
+@Composable
+fun TtsModelTabRoute(
+    modifier: Modifier,
+    onBack: () -> Unit,
+    factories: AdminViewModelFactories,
+    notifier: AdminDataChangedNotifier,
+) {
+    val factory = remember(factories) { factories.ttsModelFactory() }
+    val viewModel: AdminTtsViewModel = viewModel(factory = factory, key = "admin_tts_model")
+    val state by viewModel.uiState.collectAsState()
+
+    TtsModelTab(
+        modifier = modifier,
+        models = state.models,
+        activeModelId = state.models.find { it.isSelected }?.info?.id,
+        error = state.error,
+        isPlayingPreview = state.isPlayingPreview,
+        currentlyPlayingModelId = state.currentlyPlayingModelId,
+        onDownload = { viewModel.startDownload(it) },
+        onCancel = { viewModel.cancelDownload(it) },
+        onEnable = { viewModel.selectModel(it) },
+        onPause = { viewModel.pauseDownload(it) },
+        onResume = { viewModel.resumeDownload(it) },
+        onPreview = { viewModel.playPreview(it) },
+        onClearError = { viewModel.clearError() },
         onBack = onBack,
     )
 }

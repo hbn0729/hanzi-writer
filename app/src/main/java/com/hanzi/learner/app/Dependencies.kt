@@ -59,6 +59,9 @@ interface AdminFeatureDependencies {
     val adminDashboardDataLoader: AdminDashboardDataLoader
     val adminCharacterDataLoader: AdminCharacterDataLoader
     val adminLearningDataLoader: AdminLearningDataLoader
+    val ttsPreferenceRepository: TtsPreferenceRepositoryContract
+    val ttsDownloadManager: TtsModelDownloadManagerContract
+    val previewAudioPlayer: PreviewAudioPlayerContract
 }
 
 interface AppDependencies {

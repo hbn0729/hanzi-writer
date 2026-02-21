@@ -99,6 +99,17 @@ fun AdminScreen(
                     )
                 },
             ),
+            AdminTabDescriptor(
+                title = "语音模型",
+                content = { modifier ->
+                    TtsModelTabRoute(
+                        modifier = modifier,
+                        onBack = onBack,
+                        factories = factories,
+                        notifier = dataChangedNotifier,
+                    )
+                },
+            ),
         )
     }
     var selectedTabIndex by remember { mutableStateOf(0) }

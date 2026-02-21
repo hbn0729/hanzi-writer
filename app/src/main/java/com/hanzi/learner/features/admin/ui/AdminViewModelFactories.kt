@@ -1,6 +1,7 @@
 package com.hanzi.learner.features.admin.ui
 
 import com.hanzi.learner.data.model.TimeProvider
+import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.features.admin.domain.LoadAdminDashboardUseCase
 import com.hanzi.learner.features.admin.repository.AdminAppSettingsRepository
 import com.hanzi.learner.features.admin.repository.AdminDisabledCharRepository
@@ -17,7 +18,10 @@ import com.hanzi.learner.features.admin.viewmodel.AdminCharacterViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminDashboardViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminLearningDataViewModel
 import com.hanzi.learner.features.admin.viewmodel.AdminSettingsViewModel
+import com.hanzi.learner.features.admin.viewmodel.AdminTtsViewModel
 import com.hanzi.learner.app.AdminFeatureDependencies
+import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
+import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 
 class AdminViewModelFactories(
     private val timeProvider: TimeProvider,
@@ -31,6 +35,9 @@ class AdminViewModelFactories(
     private val phraseImportPort: PhraseImportPort,
     private val curriculumImportPort: CurriculumImportPort,
     private val strokeImportPort: StrokeImportPort,
+    private val ttsPreferenceRepository: TtsPreferenceRepositoryContract,
+    private val ttsDownloadManager: TtsModelDownloadManagerContract,
+    private val previewAudioPlayer: PreviewAudioPlayerContract,
 ) {
     fun dashboardFactory(): AdminDashboardViewModel.Factory = AdminDashboardViewModel.Factory(
         progressCommandRepository = progressCommandRepository,
@@ -71,6 +78,12 @@ class AdminViewModelFactories(
         onDataChanged = onDataChanged,
     )
 
+    fun ttsModelFactory(): AdminTtsViewModel.Factory = AdminTtsViewModel.Factory(
+        preferenceRepository = ttsPreferenceRepository,
+        downloadManager = ttsDownloadManager,
+        previewPlayer = previewAudioPlayer,
+    )
+
     companion object {
         fun from(deps: AdminFeatureDependencies): AdminViewModelFactories = AdminViewModelFactories(
             timeProvider = deps.timeProvider,
@@ -84,6 +97,9 @@ class AdminViewModelFactories(
             phraseImportPort = deps.phraseImportPort,
             curriculumImportPort = deps.curriculumImportPort,
             strokeImportPort = deps.strokeImportPort,
+            ttsPreferenceRepository = deps.ttsPreferenceRepository,
+            ttsDownloadManager = deps.ttsDownloadManager,
+            previewAudioPlayer = deps.previewAudioPlayer,
         )
     }
 }
