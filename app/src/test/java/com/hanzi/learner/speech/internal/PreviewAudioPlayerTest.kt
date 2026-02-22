@@ -9,13 +9,21 @@ class PreviewAudioPlayerTest {
 
     @Test
     fun `isPlaying returns false initially`() = runTest {
-        // Note: This is a simple test that verifies the contract structure
-        // Full testing would require Android instrumentation tests due to MediaPlayer dependency
         val player = createMockPlayer()
 
         val result = player.isPlaying.first()
 
         assertFalse("isPlaying should be false initially", result)
+    }
+
+    @Test
+    fun `playFromLocalModel sets isPlaying to true`() = runTest {
+        val player = createMockPlayer()
+
+        player.playFromLocalModel("/path/to/model", listOf("model.onnx", "tokens.txt"), "测试文本")
+
+        val result = player.isPlaying.first()
+        assertTrue("isPlaying should be true after playFromLocalModel", result)
     }
 
     @Test
@@ -31,7 +39,6 @@ class PreviewAudioPlayerTest {
     }
 
     private fun createMockPlayer(): com.hanzi.learner.speech.contract.PreviewAudioPlayerContract {
-        // Return a mock implementation for unit testing
         return object : com.hanzi.learner.speech.contract.PreviewAudioPlayerContract {
             private val _isPlaying = kotlinx.coroutines.flow.MutableStateFlow(false)
             override val isPlaying: kotlinx.coroutines.flow.StateFlow<Boolean> = _isPlaying
@@ -45,6 +52,10 @@ class PreviewAudioPlayerTest {
             }
 
             override fun playSystemTtsPreview(text: String) {
+                _isPlaying.value = true
+            }
+
+            override fun playFromLocalModel(modelDirPath: String, modelFiles: List<String>, text: String) {
                 _isPlaying.value = true
             }
 

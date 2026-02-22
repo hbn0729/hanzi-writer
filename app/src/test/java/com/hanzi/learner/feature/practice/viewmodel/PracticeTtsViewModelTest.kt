@@ -131,6 +131,10 @@ class PracticeTtsViewModelTest {
             _isPlaying.value = true
         }
 
+        override fun playFromLocalModel(modelDirPath: String, modelFiles: List<String>, text: String) {
+            _isPlaying.value = true
+        }
+
         override fun stop() {
             _isPlaying.value = false
         }

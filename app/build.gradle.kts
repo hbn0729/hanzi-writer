@@ -17,6 +17,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            isDebuggable = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
@@ -38,6 +43,14 @@ android {
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.8"
+    }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs("-XX:MaxDirectMemorySize=512m")
+            it.maxHeapSize = "2g"
+        }
     }
 
     lint {

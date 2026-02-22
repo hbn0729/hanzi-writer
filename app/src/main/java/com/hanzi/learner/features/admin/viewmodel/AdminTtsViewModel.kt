@@ -9,7 +9,7 @@ import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
 import com.hanzi.learner.speech.model.TtsModelUiItem
-import kotlinx.coroutines.flow.Flow
+import com.hanzi.learner.speech.internal.PREVIEW_TEXT
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -163,29 +163,62 @@ class AdminTtsViewModel(
 
     /**
      * Plays the preview audio for a model.
+     * For system TTS: uses system TTS directly.
+     * For downloadable models: requires model to be downloaded first.
      */
     fun playPreview(modelId: String) {
         viewModelScope.launch {
             try {
-                // Stop any current playback
                 previewPlayer.stop()
 
                 val model = TtsModelRegistry.getModelById(modelId) ?: return@launch
 
-                _uiState.value = _uiState.value.copy(
-                    currentlyPlayingModelId = modelId,
-                )
-
                 if (model.isSystemTts) {
-                    // For system TTS, use a sample text
-                    previewPlayer.playSystemTtsPreview("你好，这是系统语音预览")
-                } else {
-                    // For downloadable models, play from URL
-                    previewPlayer.playFromUrl(model.previewAudioUrl)
+                    _uiState.value = _uiState.value.copy(
+                        currentlyPlayingModelId = modelId,
+                    )
+                    previewPlayer.playSystemTtsPreview(PREVIEW_TEXT)
+                    return@launch
+                }
+
+                val downloadState = downloadManager.downloadStates.value[modelId]
+                    ?: TtsModelDownloadState.NotDownloaded
+
+                when (downloadState) {
+                    is TtsModelDownloadState.NotDownloaded -> {
+                        _uiState.value = _uiState.value.copy(
+                            error = "请先下载模型后再试听",
+                        )
+                    }
+                    is TtsModelDownloadState.Downloading -> {
+                        _uiState.value = _uiState.value.copy(
+                            error = "模型下载中，请等待下载完成后再试听",
+                        )
+                    }
+                    is TtsModelDownloadState.Paused -> {
+                        _uiState.value = _uiState.value.copy(
+                            error = "模型下载已暂停，请继续下载后再试听",
+                        )
+                    }
+                    is TtsModelDownloadState.Downloaded -> {
+                        _uiState.value = _uiState.value.copy(
+                            currentlyPlayingModelId = modelId,
+                        )
+                        previewPlayer.playFromLocalModel(
+                            modelDirPath = downloadState.localPath,
+                            modelFiles = model.modelFiles,
+                            text = PREVIEW_TEXT,
+                        )
+                    }
+                    is TtsModelDownloadState.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            error = "模型下载失败，请重试下载后再试听",
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "Failed to play preview",
+                    error = e.message ?: "试听失败",
                     currentlyPlayingModelId = null,
                 )
             }

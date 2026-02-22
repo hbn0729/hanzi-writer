@@ -31,6 +31,14 @@ interface PreviewAudioPlayerContract {
     fun playSystemTtsPreview(text: String)
 
     /**
+     * Play a preview using a locally downloaded TTS model.
+     * @param modelDirPath Absolute path to the model directory
+     * @param modelFiles List of model file names (e.g., ["model.onnx", "tokens.txt"])
+     * @param text The text to synthesize and play
+     */
+    fun playFromLocalModel(modelDirPath: String, modelFiles: List<String>, text: String)
+
+    /**
      * Stop the current playback.
      */
     fun stop()

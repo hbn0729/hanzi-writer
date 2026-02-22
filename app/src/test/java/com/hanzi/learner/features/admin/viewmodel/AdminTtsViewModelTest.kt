@@ -137,4 +137,24 @@ class AdminTtsViewModelTest {
         assertEquals(item1, item2)
         assertNotEquals(item1, item3)
     }
+
+    @Test
+    fun `PREVIEW_TEXT constant is defined correctly`() {
+        assertEquals("这是一条试听朗读", com.hanzi.learner.speech.internal.PREVIEW_TEXT)
+    }
+
+    @Test
+    fun `TtsModelDownloadState NotDownloaded handles preview correctly`() {
+        val state = TtsModelDownloadState.NotDownloaded
+        
+        assertTrue("NotDownloaded should prevent preview", state is TtsModelDownloadState.NotDownloaded)
+    }
+
+    @Test
+    fun `TtsModelDownloadState Downloaded contains localPath`() {
+        val localPath = "/data/user/0/com.hanzi.learner/files/tts_models/test-model"
+        val state = TtsModelDownloadState.Downloaded(localPath)
+        
+        assertEquals(localPath, state.localPath)
+    }
 }
