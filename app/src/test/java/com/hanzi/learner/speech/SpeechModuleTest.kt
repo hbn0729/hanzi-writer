@@ -4,10 +4,8 @@ import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -80,24 +78,6 @@ class SpeechModuleTest {
         }
 
         assertFalse(SpeechModule.isModelReady("vits-zh-hf-fanchen-wnj", mockDownloadManager))
-    }
-
-    @Test
-    fun `createFilesystemTtsSpeaker should create config with correct paths`() {
-        // We can't easily test the actual speaker creation without Context,
-        // but we can verify the config generation logic by checking the public API behavior
-        val modelDirPath = "/data/tts_models/test-model"
-
-        // The createFilesystemTtsSpeaker function creates a config like this:
-        // modelPath = "$modelDirPath/model.onnx"
-        // tokensPath = "$modelDirPath/tokens.txt"
-        // etc.
-
-        // Verify the path construction logic
-        assertEquals("$modelDirPath/model.onnx", "$modelDirPath/model.onnx")
-        assertEquals("$modelDirPath/tokens.txt", "$modelDirPath/tokens.txt")
-        assertEquals("$modelDirPath/lexicon.txt", "$modelDirPath/lexicon.txt")
-        assertEquals("$modelDirPath/dict", "$modelDirPath/dict")
     }
 
     @Test

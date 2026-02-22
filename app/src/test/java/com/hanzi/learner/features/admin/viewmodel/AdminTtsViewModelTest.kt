@@ -3,6 +3,7 @@ package com.hanzi.learner.features.admin.viewmodel
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelInfo
 import com.hanzi.learner.speech.model.TtsModelRegistry
+import com.hanzi.learner.speech.model.TtsModelUiItem
 import org.junit.Assert.*
 import org.junit.Test
 

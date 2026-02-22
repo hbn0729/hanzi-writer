@@ -12,7 +12,7 @@ out/
 /.trae/
 # Local configuration
 local.properties
-libs/
+
 
 tts_models/
 

@@ -2,14 +2,19 @@ package com.hanzi.learner.speech.internal
 
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelInfo
 import com.hanzi.learner.speech.model.TtsModelRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
 
 class TtsModelDownloadManagerTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     @Test
     fun `TtsModelDownloadManager implements contract`() {
@@ -145,6 +150,34 @@ class TtsModelDownloadManagerTest {
         assertEquals("/path/to/model", downloaded.localPath)
         assertEquals("Test error", error.error)
         assertTrue(error.retryable)
+    }
+
+    @Test
+    fun `isModelDownloaded requires all declared model files`() = runTest {
+        val modelId = "vits-zh-hf-fanchen-wnj"
+        val modelInfo = TtsModelRegistry.getModelById(modelId) ?: error("Missing test model in registry")
+
+        val baseDir = tempFolder.newFolder("tts_models")
+        val modelDir = File(baseDir, modelId).apply { mkdirs() }
+
+        val manager = TtsModelDownloadManager(
+            modelsBaseDir = baseDir,
+        )
+
+        try {
+            assertFalse(manager.isModelDownloaded(modelId))
+
+            modelInfo.modelFiles.forEach { fileName ->
+                File(modelDir, fileName).writeBytes(byteArrayOf(1, 2, 3))
+            }
+            assertTrue(manager.isModelDownloaded(modelId))
+
+            File(modelDir, modelInfo.modelFiles.first()).delete()
+            assertFalse(manager.isModelDownloaded(modelId))
+
+        } finally {
+            manager.release()
+        }
     }
 
     private fun createMockDownloadManager(): TtsModelDownloadManagerContract {

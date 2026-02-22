@@ -1,17 +1,21 @@
 package com.hanzi.learner.speech.internal
 
-import android.content.Context
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -27,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
  * pause/resume, and cancellation.
  */
 class TtsModelDownloadManager(
-    private val context: Context,
+    private val modelsBaseDir: File,
     private val modelRegistry: TtsModelRegistry = TtsModelRegistry,
 ) : TtsModelDownloadManagerContract {
 
@@ -35,19 +39,15 @@ class TtsModelDownloadManager(
         private const val BUFFER_SIZE = 8192
         private const val CONNECT_TIMEOUT_MS = 30000
         private const val READ_TIMEOUT_MS = 30000
-        private const val MODELS_DIR = "tts_models"
     }
 
     private val _downloadStates = MutableStateFlow<Map<String, TtsModelDownloadState>>(emptyMap())
     override val downloadStates: StateFlow<Map<String, TtsModelDownloadState>> = _downloadStates.asStateFlow()
 
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val activeDownloads = ConcurrentHashMap<String, Job>()
-    private val downloadProgress = ConcurrentHashMap<String, Long>() // bytes downloaded
     private val pauseSignals = ConcurrentHashMap<String, MutableStateFlow<Boolean>>()
     private val mutex = Mutex()
-
-    private val modelsBaseDir: File
-        get() = File(context.filesDir, MODELS_DIR)
 
     init {
         // Initialize states for all downloadable models
@@ -78,7 +78,6 @@ class TtsModelDownloadManager(
         // Clean up any existing files for fresh download
         if (currentState !is TtsModelDownloadState.Paused) {
             deleteModelFiles(modelId)
-            downloadProgress[modelId] = 0L
         }
 
         // Create pause signal
@@ -87,13 +86,17 @@ class TtsModelDownloadManager(
 
         // Update state to downloading
         updateState(modelId) {
-            val progress = downloadProgress[modelId] ?: 0L
             TtsModelDownloadState.Downloading(
-                progress = progress.toFloat() / model.fileSizeBytes,
-                bytesDownloaded = progress,
+                progress = 0f,
+                bytesDownloaded = 0L,
                 totalBytes = model.fileSizeBytes,
             )
         }
+
+        val job = scope.launch {
+            performDownload(modelId)
+        }
+        activeDownloads[modelId] = job
 
         return true
     }
@@ -141,7 +144,6 @@ class TtsModelDownloadManager(
 
         // Delete downloaded files
         deleteModelFiles(modelId)
-        downloadProgress.remove(modelId)
         pauseSignals.remove(modelId)
 
         // Update state
@@ -154,13 +156,14 @@ class TtsModelDownloadManager(
 
     override fun getModelLocalPath(modelId: String): String? {
         val dir = getModelDirectory(modelId)
-        return if (dir.exists() && dir.isDirectory) dir.absolutePath else null
+        return if (isModelFilesExist(modelId)) dir.absolutePath else null
     }
 
     override fun release() {
         activeDownloads.values.forEach { it.cancel() }
         activeDownloads.clear()
         pauseSignals.clear()
+        scope.cancel()
     }
 
     /**
@@ -169,86 +172,36 @@ class TtsModelDownloadManager(
      */
     suspend fun performDownload(modelId: String) {
         val model = modelRegistry.getModelById(modelId) ?: return
-        val downloadUrl = model.downloadUrl ?: return
+        val downloadUrlBase = model.downloadUrl ?: return
 
         withContext(Dispatchers.IO) {
             try {
                 val modelDir = getModelDirectory(modelId)
                 modelDir.mkdirs()
 
-                val url = URL(downloadUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.apply {
-                    connectTimeout = CONNECT_TIMEOUT_MS
-                    readTimeout = READ_TIMEOUT_MS
-                    requestMethod = "GET"
-                    setRequestProperty("Accept-Encoding", "identity")
+                val requiredFiles = model.modelFiles
+                if (requiredFiles.isEmpty()) {
+                    throw IllegalStateException("Model has no modelFiles: $modelId")
                 }
 
-                // Support resume
-                val existingBytes = downloadProgress[modelId] ?: 0L
-                if (existingBytes > 0) {
-                    connection.setRequestProperty("Range", "bytes=$existingBytes-")
-                }
-
-                connection.connect()
-
-                if (connection.responseCode !in 200..299) {
-                    throw IOException("HTTP ${connection.responseCode}: ${connection.responseMessage}")
-                }
-
-                val inputStream = connection.inputStream
-                val outputFile = File(modelDir, "model.zip")
-                val outputStream = if (existingBytes > 0) {
-                    outputFile.outputStream().apply { channel.position(existingBytes) }
-                } else {
-                    outputFile.outputStream()
-                }
-
-                val buffer = ByteArray(BUFFER_SIZE)
-                var bytesRead: Int
-                var totalBytesRead = existingBytes
                 val pauseSignal = pauseSignals[modelId] ?: MutableStateFlow(false)
 
-                inputStream.use { input ->
-                    outputStream.use { output ->
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            // Check for cancellation
-                            if (!currentCoroutineContext().isActive) {
-                                throw CancellationException("Download cancelled")
-                            }
-
-                            // Check for pause
-                            if (pauseSignal.value) {
-                                // Save progress and wait
-                                downloadProgress[modelId] = totalBytesRead
-                                while (pauseSignal.value && currentCoroutineContext().isActive) {
-                                    kotlinx.coroutines.delay(100)
-                                }
-                                if (!currentCoroutineContext().isActive) {
-                                    throw CancellationException("Download cancelled while paused")
-                                }
-                            }
-
-                            output.write(buffer, 0, bytesRead)
-                            totalBytesRead += bytesRead
-
-                            // Update progress
-                            val progress = totalBytesRead.toFloat() / model.fileSizeBytes
-                            updateState(modelId) {
-                                TtsModelDownloadState.Downloading(
-                                    progress = progress.coerceIn(0f, 1f),
-                                    bytesDownloaded = totalBytesRead,
-                                    totalBytes = model.fileSizeBytes,
-                                )
-                            }
-                        }
+                supervisorScope {
+                    for (fileName in requiredFiles) {
+                        downloadSingleFile(
+                            modelId = modelId,
+                            downloadUrlBase = downloadUrlBase,
+                            modelDir = modelDir,
+                            fileName = fileName,
+                            pauseSignal = pauseSignal,
+                            totalBytesExpected = model.fileSizeBytes,
+                        )
                     }
                 }
 
-                // Download complete - extract if needed or mark as complete
-                // For now, assume single file download
-                downloadProgress[modelId] = totalBytesRead
+                if (!isModelFilesExist(modelId)) {
+                    throw IOException("Downloaded but required files missing for $modelId")
+                }
 
                 updateState(modelId) {
                     TtsModelDownloadState.Downloaded(modelDir.absolutePath)
@@ -276,8 +229,17 @@ class TtsModelDownloadManager(
     }
 
     private fun isModelFilesExist(modelId: String): Boolean {
+        val model = modelRegistry.getModelById(modelId) ?: return false
+        val requiredFiles = model.modelFiles
+        if (requiredFiles.isEmpty()) return false
+
         val modelDir = getModelDirectory(modelId)
-        return modelDir.exists() && modelDir.isDirectory && modelDir.listFiles()?.isNotEmpty() == true
+        if (!modelDir.exists() || !modelDir.isDirectory) return false
+
+        return requiredFiles.all { fileName ->
+            val f = File(modelDir, fileName)
+            f.exists() && f.isFile && f.length() > 0L
+        }
     }
 
     private fun deleteModelFiles(modelId: String) {
@@ -295,5 +257,107 @@ class TtsModelDownloadManager(
             val current = get(modelId) ?: TtsModelDownloadState.NotDownloaded
             put(modelId, transform(current))
         }
+    }
+
+    private suspend fun downloadSingleFile(
+        modelId: String,
+        downloadUrlBase: String,
+        modelDir: File,
+        fileName: String,
+        pauseSignal: MutableStateFlow<Boolean>,
+        totalBytesExpected: Long,
+    ) {
+        val urlString = if (downloadUrlBase.endsWith("/")) {
+            "$downloadUrlBase$fileName"
+        } else {
+            "$downloadUrlBase/$fileName"
+        }
+
+        val outputFile = File(modelDir, fileName)
+        val existingBytes = if (outputFile.exists()) outputFile.length() else 0L
+
+        val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
+            connectTimeout = CONNECT_TIMEOUT_MS
+            readTimeout = READ_TIMEOUT_MS
+            requestMethod = "GET"
+            setRequestProperty("Accept-Encoding", "identity")
+            if (existingBytes > 0) {
+                setRequestProperty("Range", "bytes=$existingBytes-")
+            }
+        }
+
+        connection.connect()
+
+        if (connection.responseCode !in 200..299) {
+            throw IOException("HTTP ${connection.responseCode}: ${connection.responseMessage}")
+        }
+
+        val buffer = ByteArray(BUFFER_SIZE)
+        var bytesRead: Int
+        var fileBytesRead = existingBytes
+
+        connection.inputStream.use { input ->
+            val outputStream = if (existingBytes > 0) {
+                outputFile.outputStream().apply { channel.position(existingBytes) }
+            } else {
+                outputFile.outputStream()
+            }
+
+            outputStream.use { output ->
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    if (!currentCoroutineContext().isActive) {
+                        throw CancellationException("Download cancelled")
+                    }
+
+                    if (pauseSignal.value) {
+                        updateState(modelId) { currentState ->
+                            if (currentState is TtsModelDownloadState.Downloading) {
+                                TtsModelDownloadState.Paused(
+                                    progress = currentState.progress,
+                                    bytesDownloaded = currentState.bytesDownloaded,
+                                    totalBytes = currentState.totalBytes,
+                                )
+                            } else {
+                                currentState
+                            }
+                        }
+
+                        while (pauseSignal.value && currentCoroutineContext().isActive) {
+                            kotlinx.coroutines.delay(100)
+                        }
+                        if (!currentCoroutineContext().isActive) {
+                            throw CancellationException("Download cancelled while paused")
+                        }
+                    }
+
+                    output.write(buffer, 0, bytesRead)
+                    fileBytesRead += bytesRead
+
+                    val totalDownloaded = getModelTotalDownloadedBytes(modelId)
+                    val progress = if (totalBytesExpected > 0) {
+                        (totalDownloaded.toFloat() / totalBytesExpected).coerceIn(0f, 1f)
+                    } else {
+                        0f
+                    }
+
+                    updateState(modelId) {
+                        TtsModelDownloadState.Downloading(
+                            progress = progress,
+                            bytesDownloaded = totalDownloaded,
+                            totalBytes = totalBytesExpected,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getModelTotalDownloadedBytes(modelId: String): Long {
+        val model = modelRegistry.getModelById(modelId) ?: return 0L
+        val modelDir = getModelDirectory(modelId)
+        return model.modelFiles.sumOf { fileName ->
+            val f = File(modelDir, fileName)
+            if (f.exists() && f.isFile) f.length() else 0L
+        }.coerceAtMost(Long.MAX_VALUE)
     }
 }

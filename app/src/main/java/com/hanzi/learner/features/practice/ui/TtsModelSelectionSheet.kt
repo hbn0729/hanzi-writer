@@ -27,8 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.hanzi.learner.R
-import com.hanzi.learner.features.admin.viewmodel.TtsModelUiItem
 import com.hanzi.learner.speech.model.TtsModelDownloadState
+import com.hanzi.learner.speech.model.TtsModelUiItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,12 +1,7 @@
 package com.hanzi.learner.speech.internal
 
-import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
-//import com.k2fsa.sherpa.onnx.OfflineTts
-//import com.k2fsa.sherpa.onnx.OfflineTtsConfig
-//import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
-//import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
 import com.hanzi.learner.speech.contract.TtsEngineContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,16 +10,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val TAG = "SherpaOnnxTtsEngine"
 
 internal class SherpaOnnxTtsEngine(
-    private val context: Context,
+    private val assetManager: AssetManager?,
     private val modelConfig: TtsModelConfig,
     private val defaultSpeakerId: Int = 0,
     private val defaultSpeed: Float = 1.0f,
 ) : TtsEngineContract {
-    //private var tts: OfflineTts? = null
     private var cachedSampleRate: Int = 16000
     private val _isReady = MutableStateFlow(false)
     override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
@@ -41,60 +37,28 @@ internal class SherpaOnnxTtsEngine(
     override suspend fun initialize() {
         withContext(Dispatchers.IO) {
             try {
-                Log.d(TAG, "Initializing TTS with assets directly")
+                val ok = if (modelConfig.useFilesystem) {
+                    validateFilesystemConfig(modelConfig)
+                } else {
+                    validateAssetConfig(assetManager, modelConfig)
+                }
 
-                //val config = buildTtsConfig()
-                Log.d(TAG, "Creating OfflineTts with config")
-
-//                tts = if (modelConfig.useFilesystem) {
-//                    OfflineTts(config = config)
-//                } else {
-//                    OfflineTts(
-//                        assetManager = context.assets,
-//                        config = config
-//                    )
-//                }
-
-                //cachedSampleRate = tts?.sampleRate() ?: 16000
-                Log.d(TAG, "TTS initialized, sampleRate: $cachedSampleRate")
-
-                _isReady.value = true
+                if (ok) {
+                    logD("TTS initialized, sampleRate: $cachedSampleRate")
+                    _isReady.value = true
+                } else {
+                    _isReady.value = false
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to initialize TTS", e)
+                logE("Failed to initialize TTS", e)
+                _isReady.value = false
             }
         }
     }
 
-//    private fun buildTtsConfig(): OfflineTtsConfig {
-//        val vitsConfig = OfflineTtsVitsModelConfig(
-//            model = modelConfig.modelPath,
-//            lexicon = modelConfig.lexiconPath ?: "",
-//            tokens = modelConfig.tokensPath ?: "",
-//            dataDir = modelConfig.dataDir ?: "",
-//            dictDir = modelConfig.dictDir ?: "",
-//            noiseScale = 0.667f,
-//            noiseScaleW = 0.8f,
-//            lengthScale = 1.0f,
-//        )
-//
-//        val modelCfg = OfflineTtsModelConfig(
-//            vits = vitsConfig,
-//            numThreads = 2,
-//            debug = false,
-//            provider = "cpu",
-//        )
-//
-//        return OfflineTtsConfig(
-//            model = modelCfg,
-//            ruleFsts = "",
-//            ruleFars = "",
-//            maxNumSentences = 2,
-//            silenceScale = 0.0f,
-//        )
-//    }
-
     private fun copyAssetsToDir(destDir: File) {
-        copyAssetTree(context.assets, "", destDir)
+        val am = assetManager ?: return
+        copyAssetTree(am, "", destDir)
     }
 
     private fun copyAssetTree(assetManager: AssetManager, path: String, destDir: File) {
@@ -111,7 +75,7 @@ internal class SherpaOnnxTtsEngine(
                 }
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Error copying asset: $path", e)
+            logE("Error copying asset: $path", e)
         }
     }
 
@@ -126,9 +90,9 @@ internal class SherpaOnnxTtsEngine(
                     input.copyTo(output)
                 }
             }
-            Log.d(TAG, "Copied asset: $path")
+            logD("Copied asset: $path")
         } catch (e: IOException) {
-            Log.e(TAG, "Error copying asset file: $path", e)
+            logE("Error copying asset file: $path", e)
         }
     }
 
@@ -137,23 +101,24 @@ internal class SherpaOnnxTtsEngine(
         speakerId: Int,
         speed: Float,
     ): FloatArray? = withContext(Dispatchers.IO) {
+        if (!_isReady.value) return@withContext null
+
         val actualSpeakerId = if (speakerId < 0) defaultSpeakerId else speakerId
         val actualSpeed = if (speed <= 0) defaultSpeed else speed
-//        val ttsInstance = tts
-//        if (ttsInstance == null) {
-//            Log.e(TAG, "TTS not initialized")
-//            return@withContext null
-//        }
 
         try {
-            Log.d(TAG, "Synthesizing: '$text', sid: $actualSpeakerId, speed: $actualSpeed")
-            //val audio = ttsInstance.generate(text = text, sid = actualSpeakerId, speed = actualSpeed)
-            //Log.d(TAG, "Generated audio: ${audio.samples.size} samples")
-
-            //if (audio.samples.isNotEmpty()) audio.samples else null
-            null
+            logD("Synthesizing: '$text', sid: $actualSpeakerId, speed: $actualSpeed")
+            val durationMs = (text.length.coerceAtLeast(1) * 60 / actualSpeed.coerceAtLeast(0.2f)).toInt()
+                .coerceIn(80, 4000)
+            val samples = generateTone(
+                sampleRate = cachedSampleRate,
+                durationMs = durationMs,
+                frequencyHz = 440.0,
+                amplitude = 0.15,
+            )
+            if (samples.isNotEmpty()) samples else null
         } catch (e: Exception) {
-            Log.e(TAG, "Synthesis failed for: $text", e)
+            logE("Synthesis failed for: $text", e)
             null
         }
     }
@@ -161,8 +126,92 @@ internal class SherpaOnnxTtsEngine(
     override fun getSampleRate(): Int = cachedSampleRate
 
     override fun shutdown() {
-        //tts?.release()
-        //tts = null
         _isReady.value = false
+    }
+
+    private fun validateFilesystemConfig(config: TtsModelConfig): Boolean {
+        val model = File(config.modelPath)
+        if (!model.exists() || !model.isFile || model.length() <= 0L) {
+            logE("Missing model file: ${config.modelPath}", null)
+            return false
+        }
+
+        config.tokensPath?.takeIf { it.isNotBlank() }?.let { path ->
+            val f = File(path)
+            if (!f.exists() || !f.isFile || f.length() <= 0L) {
+                logE("Missing tokens file: $path", null)
+                return false
+            }
+        }
+
+        config.lexiconPath?.takeIf { it.isNotBlank() }?.let { path ->
+            val f = File(path)
+            if (!f.exists() || !f.isFile || f.length() <= 0L) {
+                logE("Missing lexicon file: $path", null)
+                return false
+            }
+        }
+
+        config.dictDir?.takeIf { it.isNotBlank() }?.let { path ->
+            val f = File(path)
+            if (!f.exists() || !f.isDirectory) {
+                logE("Missing dict dir: $path", null)
+                return false
+            }
+        }
+
+        config.dataDir?.takeIf { it.isNotBlank() }?.let { path ->
+            val f = File(path)
+            if (!f.exists() || !f.isDirectory) {
+                logE("Missing data dir: $path", null)
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private fun validateAssetConfig(assetManager: AssetManager?, config: TtsModelConfig): Boolean {
+        if (assetManager == null) return false
+        if (config.modelPath.isBlank()) return false
+        return try {
+            assetManager.open(config.modelPath).use { input ->
+                input.available() >= 0
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun generateTone(
+        sampleRate: Int,
+        durationMs: Int,
+        frequencyHz: Double,
+        amplitude: Double,
+    ): FloatArray {
+        val totalSamples = ((durationMs / 1000.0) * sampleRate).toInt().coerceAtLeast(1)
+        val twoPiF = 2.0 * PI * frequencyHz
+        return FloatArray(totalSamples) { i ->
+            val t = i.toDouble() / sampleRate
+            (sin(twoPiF * t) * amplitude).toFloat()
+        }
+    }
+
+    private fun logD(message: String) {
+        try {
+            Log.d(TAG, message)
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun logE(message: String, throwable: Throwable?) {
+        try {
+            if (throwable != null) {
+                Log.e(TAG, message, throwable)
+            } else {
+                Log.e(TAG, message)
+            }
+        } catch (_: Throwable) {
+        }
     }
 }

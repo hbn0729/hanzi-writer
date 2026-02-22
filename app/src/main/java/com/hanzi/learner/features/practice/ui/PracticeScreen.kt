@@ -25,10 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,9 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hanzi.learner.R
-import com.hanzi.learner.features.admin.viewmodel.TtsModelUiItem
 import com.hanzi.learner.features.practice.viewmodel.FlashState
 import com.hanzi.learner.features.practice.viewmodel.PracticeAction
+import com.hanzi.learner.features.practice.viewmodel.PracticeTtsViewModel
 import com.hanzi.learner.features.practice.viewmodel.PracticeUiState
 import com.hanzi.learner.features.practice.viewmodel.PracticeViewModel
 import com.hanzi.learner.character_writer.match.StrokeMatchConfig
@@ -53,11 +51,8 @@ import com.hanzi.learner.character_writer.match.matchesWithDefaults
 import com.hanzi.learner.character_writer.practice.HanziTraceOverlay
 import com.hanzi.learner.speech.rememberTtsSpeaker
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
-import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelRegistry
 import com.hanzi.learner.app.PracticeFeatureDependencies
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,7 +63,11 @@ fun PracticeScreen(
     reviewOnly: Boolean = false,
 ) {
     val context = LocalContext.current
-    val speaker = rememberTtsSpeaker(context)
+    val speaker = rememberTtsSpeaker(
+        context = context,
+        preferenceRepository = deps.ttsPreferenceRepository,
+        downloadManager = deps.ttsDownloadManager,
+    )
     val factory = remember(deps, reviewOnly) {
         PracticeViewModel.Factory(
             reviewOnly = reviewOnly,
@@ -79,78 +78,25 @@ fun PracticeScreen(
     val viewModel: PracticeViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
 
-    val scope = rememberCoroutineScope()
-    var showTtsSelectionSheet by remember { mutableStateOf(false) }
-    var ttsModels by remember { mutableStateOf<List<TtsModelUiItem>>(emptyList()) }
-    var isPlayingPreview by remember { mutableStateOf(false) }
-    var currentlyPlayingModelId by remember { mutableStateOf<String?>(null) }
+    val ttsViewModel: PracticeTtsViewModel = viewModel(
+        factory = remember(deps) {
+            PracticeTtsViewModel.Factory(
+                preferenceRepository = deps.ttsPreferenceRepository,
+                downloadManager = deps.ttsDownloadManager,
+                previewPlayer = deps.previewAudioPlayer,
+            )
+        },
+    )
+    val ttsUiState by ttsViewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
-        combine(
-            deps.ttsPreferenceRepository.getSelectedModelId(),
-            deps.ttsDownloadManager.downloadStates,
-        ) { selectedId, downloadStates ->
-            val hasSelection = selectedId != null
-            val models = TtsModelRegistry.getAvailableModels().map { model ->
-                TtsModelUiItem(
-                    info = model,
-                    downloadState = downloadStates[model.id] ?: TtsModelDownloadState.NotDownloaded,
-                    isSelected = model.id == selectedId,
-                )
-            }
-            hasSelection to models
-        }.collect { (hasSelection, models) ->
-            ttsModels = models
-            if (!hasSelection && models.isNotEmpty()) {
-                showTtsSelectionSheet = true
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        deps.previewAudioPlayer.isPlaying.collect { playing ->
-            isPlayingPreview = playing
-            if (!playing) {
-                currentlyPlayingModelId = null
-            }
-        }
-    }
-
-    if (showTtsSelectionSheet && ttsModels.isNotEmpty()) {
+    if (ttsUiState.showSelectionSheet && ttsUiState.models.isNotEmpty()) {
         TtsModelSelectionSheet(
-            models = ttsModels,
-            isPlayingPreview = isPlayingPreview,
-            currentlyPlayingModelId = currentlyPlayingModelId,
-            onModelSelected = { modelId ->
-                scope.launch {
-                    val model = TtsModelRegistry.getModelById(modelId)
-                    if (model != null && !model.isSystemTts) {
-                        val downloadState = deps.ttsDownloadManager.downloadStates.value[modelId]
-                        if (downloadState is TtsModelDownloadState.NotDownloaded ||
-                            downloadState is TtsModelDownloadState.Error
-                        ) {
-                            deps.ttsDownloadManager.startDownload(modelId)
-                        }
-                    }
-                    deps.ttsPreferenceRepository.setSelectedModelId(modelId)
-                    showTtsSelectionSheet = false
-                }
-            },
-            onPreview = { modelId ->
-                scope.launch {
-                    currentlyPlayingModelId = modelId
-                    val model = TtsModelRegistry.getModelById(modelId) ?: return@launch
-                    deps.previewAudioPlayer.stop()
-                    if (model.isSystemTts) {
-                        deps.previewAudioPlayer.playSystemTtsPreview("你好，这是系统语音预览")
-                    } else {
-                        deps.previewAudioPlayer.playFromUrl(model.previewAudioUrl)
-                    }
-                }
-            },
-            onDismiss = {
-                showTtsSelectionSheet = false
-            },
+            models = ttsUiState.models,
+            isPlayingPreview = ttsUiState.isPlayingPreview,
+            currentlyPlayingModelId = ttsUiState.currentlyPlayingModelId,
+            onModelSelected = ttsViewModel::selectModel,
+            onPreview = ttsViewModel::playPreview,
+            onDismiss = ttsViewModel::dismissSelection,
         )
     }
 

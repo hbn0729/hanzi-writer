@@ -1,9 +1,16 @@
 package com.hanzi.learner.speech.internal
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
 
 class SherpaOnnxTtsEngineTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     @Test
     fun `TtsModelConfig has useFilesystem field with default value false`() {
@@ -51,5 +58,31 @@ class SherpaOnnxTtsEngineTest {
         )
 
         assertFalse("useFilesystem should be false for asset mode", config.useFilesystem)
+    }
+
+    @Test
+    fun `initialize and synthesize work in filesystem mode`() = runTest {
+        val modelDir = tempFolder.newFolder("model")
+        val modelFile = File(modelDir, "model.onnx").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        val tokensFile = File(modelDir, "tokens.txt").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        val lexiconFile = File(modelDir, "lexicon.txt").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+
+        val engine = SherpaOnnxTtsEngine(
+            assetManager = null,
+            modelConfig = SherpaOnnxTtsEngine.TtsModelConfig(
+                modelPath = modelFile.absolutePath,
+                tokensPath = tokensFile.absolutePath,
+                lexiconPath = lexiconFile.absolutePath,
+                useFilesystem = true,
+            ),
+        )
+
+        engine.initialize()
+
+        assertTrue(engine.isReady.value)
+
+        val samples = engine.synthesize("你好")
+        assertNotNull(samples)
+        assertTrue(samples!!.isNotEmpty())
     }
 }

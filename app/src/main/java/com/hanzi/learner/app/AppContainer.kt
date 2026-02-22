@@ -29,6 +29,7 @@ import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.internal.PreviewAudioPlayer
 import com.hanzi.learner.speech.internal.TtsModelDownloadManager
+import java.io.File
 
 class AppContainer(
     context: Context,
@@ -52,7 +53,7 @@ class AppContainer(
     )
 
     private val _ttsDownloadManager: TtsModelDownloadManagerContract = TtsModelDownloadManager(
-        context = context.applicationContext,
+        modelsBaseDir = File(context.applicationContext.filesDir, "tts_models"),
     )
 
     private val _previewAudioPlayer: PreviewAudioPlayerContract = PreviewAudioPlayer(

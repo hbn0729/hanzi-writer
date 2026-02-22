@@ -7,8 +7,8 @@ import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelInfo
 import com.hanzi.learner.speech.model.TtsModelRegistry
+import com.hanzi.learner.speech.model.TtsModelUiItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,15 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-
-/**
- * UI state for a single TTS model item.
- */
-data class TtsModelUiItem(
-    val info: TtsModelInfo,
-    val downloadState: TtsModelDownloadState,
-    val isSelected: Boolean,
-)
 
 /**
  * UI state for the TTS management screen.

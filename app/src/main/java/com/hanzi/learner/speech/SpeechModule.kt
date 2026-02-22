@@ -7,6 +7,7 @@ import com.hanzi.learner.speech.contract.TtsEngineContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
 import com.hanzi.learner.speech.internal.FallbackTtsSpeaker
+import com.hanzi.learner.speech.internal.NoOpTtsSpeaker
 import com.hanzi.learner.speech.internal.PcmFloatAudioPlayer
 import com.hanzi.learner.speech.internal.SherpaOnnxTtsEngine
 import com.hanzi.learner.speech.internal.SherpaOnnxTtsSpeaker
@@ -16,6 +17,7 @@ import com.hanzi.learner.speech.model.TtsModelRegistry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.io.File
 
 /**
  * Speech module for creating TTS speakers.
@@ -65,14 +67,16 @@ object SpeechModule {
         modelId: String?,
         downloadManager: TtsModelDownloadManagerContract? = null,
     ): TtsSpeakerContract {
-        // If no model selected or system TTS selected, use system TTS
-        if (modelId == null || modelId == TtsModelRegistry.SYSTEM_TTS_ID) {
+        if (modelId == null) {
+            return NoOpTtsSpeaker()
+        }
+        if (modelId == TtsModelRegistry.SYSTEM_TTS_ID) {
             return SystemTtsSpeaker(context)
         }
 
         // Get model info
         val modelInfo = TtsModelRegistry.getModelById(modelId)
-            ?: return SystemTtsSpeaker(context) // Fallback to system TTS if model not found
+            ?: return NoOpTtsSpeaker()
 
         // If it's system TTS, return it directly
         if (modelInfo.isSystemTts) {
@@ -82,16 +86,16 @@ object SpeechModule {
         // Check if model is downloaded (if download manager is provided)
         val isDownloaded = downloadManager?.isModelDownloaded(modelId) == true
 
-        // If model is not downloaded, fallback to system TTS
+        // If model is not downloaded, stay silent until it becomes available
         if (!isDownloaded) {
-            return SystemTtsSpeaker(context)
+            return NoOpTtsSpeaker()
         }
 
         // Create SherpaOnnx TTS speaker with downloaded model
         val modelPath = downloadManager?.getModelLocalPath(modelId)
-            ?: return SystemTtsSpeaker(context)
+            ?: return NoOpTtsSpeaker()
 
-        return createFilesystemTtsSpeaker(context, modelPath)
+        return createFilesystemTtsSpeaker(context, modelPath, modelInfo.modelFiles)
     }
 
     /**
@@ -108,7 +112,7 @@ object SpeechModule {
         )
 
         val engine: TtsEngineContract = SherpaOnnxTtsEngine(
-            context = context,
+            assetManager = context.assets,
             modelConfig = modelConfig,
             defaultSpeakerId = config.speakerId,
             defaultSpeed = config.speed,
@@ -126,12 +130,21 @@ object SpeechModule {
      * Creates a TTS speaker from a filesystem model path.
      * Used for downloaded models.
      */
-    fun createFilesystemTtsSpeaker(context: Context, modelDirPath: String): TtsSpeakerContract {
+    fun createFilesystemTtsSpeaker(
+        context: Context,
+        modelDirPath: String,
+        modelFiles: List<String>,
+    ): TtsSpeakerContract {
+        val onnxFile = modelFiles.firstOrNull { it.endsWith(".onnx") } ?: "model.onnx"
+        val tokensFile = modelFiles.firstOrNull { it.endsWith("tokens.txt") } ?: "tokens.txt"
+        val lexiconFile = modelFiles.firstOrNull { it.endsWith("lexicon.txt") } ?: "lexicon.txt"
+        val dictDir = File(modelDirPath, "dict").takeIf { it.exists() && it.isDirectory }?.absolutePath.orEmpty()
+
         val config = TtsConfig(
-            modelPath = "$modelDirPath/model.onnx",
-            tokensPath = "$modelDirPath/tokens.txt",
-            lexiconPath = "$modelDirPath/lexicon.txt",
-            dictDir = "$modelDirPath/dict",
+            modelPath = "$modelDirPath/$onnxFile",
+            tokensPath = "$modelDirPath/$tokensFile",
+            lexiconPath = "$modelDirPath/$lexiconFile",
+            dictDir = dictDir,
             useFilesystem = true,
         )
 
