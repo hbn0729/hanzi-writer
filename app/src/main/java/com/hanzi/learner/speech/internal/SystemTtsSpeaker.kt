@@ -74,15 +74,31 @@ internal class SystemTtsSpeaker(
     private fun checkChineseSupport() {
         val ttsInstance = tts ?: return
 
-        val chineseLocale = Locale.CHINESE
-        val result = ttsInstance.isLanguageAvailable(chineseLocale)
+        val chineseLocales = listOf(
+            Locale.CHINESE,
+            Locale.SIMPLIFIED_CHINESE,
+            Locale("zh", "TW"),
+        )
 
-        chineseSupported = result >= TextToSpeech.LANG_AVAILABLE
+        var bestResult = TextToSpeech.LANG_NOT_SUPPORTED
+        var bestLocale = Locale.CHINESE
+
+        for (locale in chineseLocales) {
+            val result = ttsInstance.isLanguageAvailable(locale)
+            Log.d(TAG, "Chinese support check for $locale: $result")
+            if (result > bestResult) {
+                bestResult = result
+                bestLocale = locale
+            }
+            if (result >= TextToSpeech.LANG_AVAILABLE) break
+        }
+
+        chineseSupported = bestResult >= TextToSpeech.LANG_AVAILABLE
         _isChineseSupported.value = chineseSupported
-        Log.d(TAG, "Chinese support check: $result (LANG_AVAILABLE=${TextToSpeech.LANG_AVAILABLE}), supported=$chineseSupported")
+        Log.d(TAG, "Chinese support result: supported=$chineseSupported, bestResult=$bestResult, bestLocale=$bestLocale")
 
         if (chineseSupported) {
-            val setLocaleResult = ttsInstance.setLanguage(chineseLocale)
+            val setLocaleResult = ttsInstance.setLanguage(bestLocale)
             Log.d(TAG, "Set Chinese locale result: $setLocaleResult")
         }
 
@@ -105,7 +121,7 @@ internal class SystemTtsSpeaker(
             }
         })
 
-        _isReady.value = isEngineReady && chineseSupported
+        _isReady.value = isEngineReady
 
         if (_isReady.value) {
             processPendingRequest()

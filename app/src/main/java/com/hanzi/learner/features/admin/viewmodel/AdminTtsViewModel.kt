@@ -250,7 +250,7 @@ class AdminTtsViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        previewPlayer.release()
+        previewPlayer.stop()
     }
 
     class Factory(

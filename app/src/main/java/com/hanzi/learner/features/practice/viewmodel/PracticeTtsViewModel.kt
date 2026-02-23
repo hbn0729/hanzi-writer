@@ -89,7 +89,7 @@ class PracticeTtsViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        previewPlayer.release()
+        previewPlayer.stop()
     }
 
     private fun observeModelsAndSelection() {

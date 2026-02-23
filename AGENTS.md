@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-20T21:04:53+08:00  
-**Commit:** e5e0be7  
+**Generated:** 2026-02-23T12:17:00+08:00
+**Commit:** 6da4101
 **Branch:** main
 
 ## OVERVIEW
@@ -95,32 +95,41 @@ Android Hanzi learning app (Kotlin + Compose + Room + manual DI). Core domain is
 - `ArchitectureGuardrailsTest` is the strongest source of truth for allowed dependencies.
 
 ## SPEECH MODULE
+TTS module with model management, download, and preference persistence. Supports system TTS and downloadable SherpaOnnx models.
 
-### Overview
-TTS module with automatic fallback: tries system TTS first (Chinese support), falls back to built-in SherpaOnnx if unavailable.
-
+### Structure
+```text
+speech/
+├── contract/           # interfaces for abstraction
+├── internal/           # implementations
+├── model/              # data classes, registry
+└── SpeechModule.kt     # factory
+```
 ### Files
 | File | Role |
 |------|------|
-| `speech/SpeechModule.kt` | Factory for creating TTS speakers |
+| `speech/SpeechModule.kt` | Factory for TTS speakers, model selection |
 | `speech/TtsSpeakerComposables.kt` | Compose integration (`rememberTtsSpeaker`) |
 | `speech/contract/TtsSpeakerContract.kt` | High-level TTS interface |
 | `speech/contract/TtsEngineContract.kt` | Low-level TTS engine interface |
+| `speech/contract/TtsModelDownloadManagerContract.kt` | Download orchestration |
+| `speech/contract/TtsModelRepositoryContract.kt` | Model registry interface |
+| `speech/contract/PreviewAudioPlayerContract.kt` | Audio preview playback |
 | `speech/internal/SystemTtsSpeaker.kt` | Android system TTS adapter |
-| `speech/internal/FallbackTtsSpeaker.kt` | Smart fallback wrapper |
 | `speech/internal/SherpaOnnxTtsSpeaker.kt` | Built-in SherpaOnnx TTS |
-
+| `speech/internal/TtsModelDownloadManager.kt` | Model download with pause/resume |
+| `speech/internal/PreviewAudioPlayer.kt` | Preview audio player impl |
+| `speech/model/TtsModelRegistry.kt` | Available models registry |
+| `speech/model/TtsModelInfo.kt` | Model metadata |
+| `speech/model/TtsModelDownloadState.kt` | Download state sealed class |
 ### Usage
 ```kotlin
-@Composable
-fun MyScreen(context: Context) {
-    val speaker = rememberTtsSpeaker(context)  // auto-fallback
-    speaker.speakCharacterAndPhrase("汉", "汉字")
-}
+// Create speaker from user preference
+val speaker = SpeechModule.createTtsSpeakerFromPreference(context, preferenceRepo, downloadManager)
+speaker.speakCharacterAndPhrase("汉", "汉字")
 ```
 
-### Fallback Logic
-1. App starts → `FallbackTtsSpeaker` initializes
-2. Try system TTS (max 3s timeout)
-3. If system TTS has Chinese support → use it
-4. Else → use built-in SherpaOnnx TTS
+### Key Concepts
+- **Model Selection**: User chooses TTS model via `TtsPreferenceRepository`
+- **Download Flow**: `TtsModelDownloadManager` handles pause/resume/cancel
+- **Fallback**: `FallbackTtsSpeaker` tries system TTS first, then SherpaOnnx

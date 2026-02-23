@@ -43,12 +43,22 @@ internal class PreviewAudioPlayer(
     private fun initializeSystemTts() {
         systemTts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val chineseLocale = Locale.CHINESE
-                val result = systemTts?.isLanguageAvailable(chineseLocale)
-                isSystemTtsReady = result != null && result >= TextToSpeech.LANG_AVAILABLE
+                isSystemTtsReady = true
 
-                if (isSystemTtsReady) {
-                    systemTts?.setLanguage(chineseLocale)
+                val chineseLocales = listOf(
+                    Locale.CHINESE,
+                    Locale.SIMPLIFIED_CHINESE,
+                    Locale("zh", "TW"),
+                )
+
+                for (locale in chineseLocales) {
+                    val result = systemTts?.isLanguageAvailable(locale)
+                        ?: TextToSpeech.LANG_NOT_SUPPORTED
+                    if (result >= TextToSpeech.LANG_AVAILABLE) {
+                        systemTts?.setLanguage(locale)
+                        Log.d(TAG, "Set Chinese locale: $locale (result=$result)")
+                        break
+                    }
                 }
 
                 systemTts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
