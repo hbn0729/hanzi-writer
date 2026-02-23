@@ -1,51 +1,32 @@
 # SPEECH MODULE KNOWLEDGE
 
 ## OVERVIEW
-TTS (Text-to-Speech) module with model management, download, preview, and preference persistence. Supports system TTS and downloadable SherpaOnnx neural models.
+Minimal TTS module using Android system TextToSpeech. Speaks character + phrase on practice screen entry and on speaker icon tap.
 
 ## STRUCTURE
 ```text
 speech/
-├── contract/              # interfaces for DI and testing
-│   ├── TtsSpeakerContract.kt
-│   ├── TtsEngineContract.kt
-│   ├── TtsModelDownloadManagerContract.kt
-│   ├── TtsModelRepositoryContract.kt
-│   └── PreviewAudioPlayerContract.kt
-├── internal/              # implementations
-│   ├── SystemTtsSpeaker.kt
-│   ├── SherpaOnnxTtsSpeaker.kt
-│   ├── SherpaOnnxTtsEngine.kt
-│   ├── FallbackTtsSpeaker.kt
-│   ├── TtsModelDownloadManager.kt
-│   └── PreviewAudioPlayer.kt
-├── model/                 # data classes, registry
-│   ├── TtsModelInfo.kt
-│   ├── TtsModelStatus.kt
-│   ├── TtsModelDownloadState.kt
-│   ├── TtsModelRegistry.kt
-│   └── TtsSettings.kt
-├── SpeechModule.kt        # factory for speakers
-└── TtsSpeakerComposables.kt
+├── contract/
+│   └── TtsSpeakerContract.kt    # Simple speak/stop/shutdown interface
+├── internal/
+│   ├── SystemTtsSpeaker.kt      # Android system TTS implementation
+│   └── PendingRequestHandler.kt # Queues requests while TTS initializes
+└── TtsSpeakerComposables.kt     # rememberTtsSpeaker() Compose helper
 ```
 
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |---|---|---|
-| Create TTS speaker | `SpeechModule.kt` | factory methods for different configs |
-| Add new TTS model | `model/TtsModelRegistry.kt` | register model metadata |
-| Modify download behavior | `internal/TtsModelDownloadManager.kt` | pause/resume/cancel logic |
-| Change speaker interface | `contract/TtsSpeakerContract.kt` | core abstraction |
-| Preview audio | `internal/PreviewAudioPlayer.kt` | plays preview URLs |
-| Compose integration | `TtsSpeakerComposables.kt` | `rememberTtsSpeaker` |
+| Change TTS interface | `contract/TtsSpeakerContract.kt` | isReady, speak, speakCharacterAndPhrase, stop, shutdown |
+| Modify system TTS behavior | `internal/SystemTtsSpeaker.kt` | Chinese locale selection, utterance queueing |
+| Compose integration | `TtsSpeakerComposables.kt` | `rememberTtsSpeaker(context)` |
 
 ## CONVENTIONS
-- All public APIs go through `contract/` interfaces
-- `internal/` implementations should not be imported directly by features
-- Model metadata lives in `model/TtsModelRegistry`
-- Download states are sealed classes for exhaustive handling
+- TTS speaker is created per-composition via `rememberTtsSpeaker(context)` — no DI needed.
+- `SystemTtsSpeaker` handles pending requests via `PendingRequestHandler` while TTS engine initializes.
+- Chinese locale is auto-detected and set on initialization.
 
 ## ANTI-PATTERNS
-- Do not import `internal/*` classes directly in feature modules
-- Do not bypass `SpeechModule` factory for speaker creation
-- Do not hardcode model IDs; use `TtsModelRepositoryContract.SYSTEM_TTS_ID`
+- Do not add model download/selection features — removed intentionally.
+- Do not add TTS preference persistence — system defaults are used.
+- Do not import `internal/` classes directly in feature modules; use `rememberTtsSpeaker`.

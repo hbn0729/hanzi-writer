@@ -4,8 +4,6 @@ import android.content.Context
 import com.hanzi.learner.data.repository.AppSettingsRepositoryContract
 import com.hanzi.learner.data.repository.DisabledCharRepositoryContract
 import com.hanzi.learner.data.repository.ProgressRepositoryContract
-import com.hanzi.learner.data.repository.TtsPreferenceRepository
-import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.data.model.TimeProvider
 import com.hanzi.learner.features.admin.domain.AdminCharacterDataLoader
 import com.hanzi.learner.features.admin.domain.AdminDashboardDataLoader
@@ -25,15 +23,6 @@ import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import com.hanzi.learner.features.practice.domain.CompletePracticeCharacterUseCase
 import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
 import com.hanzi.learner.character_writer.match.StrokeMatcherContract
-import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
-import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
-import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
-import com.hanzi.learner.speech.contract.TtsSpeakerContract
-import com.hanzi.learner.speech.internal.PreferenceTtsSpeaker
-import com.hanzi.learner.speech.internal.PreviewAudioPlayer
-import com.hanzi.learner.speech.internal.TtsModelDownloadManager
-import com.hanzi.learner.speech.model.TtsModelRegistry
-import java.io.File
 
 class AppContainer(
     context: Context,
@@ -52,27 +41,6 @@ class AppContainer(
         characterRepositoryProvider = practiceModule.characterRepositoryProvider,
     )
 
-    private val _ttsPreferenceRepository: TtsPreferenceRepositoryContract = TtsPreferenceRepository(
-        dao = coreDataModule.database.ttsPreferenceDao(),
-    )
-
-    private val _ttsDownloadManager: TtsModelDownloadManagerContract = TtsModelDownloadManager(
-        modelsBaseDir = File(context.applicationContext.filesDir, "tts_models"),
-    )
-
-    private val _previewAudioPlayer: PreviewAudioPlayerContract = PreviewAudioPlayer(
-        context = context.applicationContext,
-    )
-
-    private val _modelRepository: TtsModelRepositoryContract = TtsModelRegistry()
-
-    private val _ttsSpeaker: TtsSpeakerContract = PreferenceTtsSpeaker(
-        context = context.applicationContext,
-        preferenceRepository = _ttsPreferenceRepository,
-        downloadManager = _ttsDownloadManager,
-        modelRepository = _modelRepository,
-    )
-
     override val progressRepository: ProgressRepositoryContract = coreDataModule.progressRepository
     override val appSettingsRepository: AppSettingsRepositoryContract = coreDataModule.appSettingsRepository
     override val disabledCharRepository: DisabledCharRepositoryContract = coreDataModule.disabledCharRepository
@@ -82,11 +50,6 @@ class AppContainer(
     override val completePracticeCharacterUseCase: CompletePracticeCharacterUseCase =
         practiceModule.completePracticeCharacterUseCase
     override val strokeMatcher: StrokeMatcherContract = practiceModule.strokeMatcher
-    override val ttsPreferenceRepository: TtsPreferenceRepositoryContract = _ttsPreferenceRepository
-    override val ttsDownloadManager: TtsModelDownloadManagerContract = _ttsDownloadManager
-    override val previewAudioPlayer: PreviewAudioPlayerContract = _previewAudioPlayer
-    override val ttsSpeaker: TtsSpeakerContract = _ttsSpeaker
-    override val modelRepository: TtsModelRepositoryContract = _modelRepository
 
     override val timeProvider: TimeProvider = coreDataModule.timeProvider
     override val adminIndexRepository: AdminIndexRepository = adminModule.adminIndexRepository

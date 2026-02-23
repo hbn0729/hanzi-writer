@@ -127,13 +127,14 @@ hanzi-learner/
 - `viewmodel/` - 状态管理和业务逻辑编排
 
 ### 5. speech 模块
-语音合成功能，封装 Android TTS API。
+语音合成功能，封装 Android 系统 TTS API，提供汉字和词语的语音朗读。
 
 | 文件 | 职责 |
 |------|------|
-| `TtsSpeaker.kt` | TTS 引擎封装和管理 |
-| `TtsSpeakerContract.kt` | 接口定义，便于测试和替换 |
-| `TtsSpeakerComposables.kt` | Compose 集成组件 |
+| `contract/TtsSpeakerContract.kt` | TTS 接口定义（`speak`、`speakCharacterAndPhrase`、`stop`、`shutdown`） |
+| `internal/SystemTtsSpeaker.kt` | Android 系统 TTS 实现，自动选择中文语音 |
+| `internal/PendingRequestHandler.kt` | TTS 初始化期间的请求队列管理 |
+| `TtsSpeakerComposables.kt` | Compose 集成（`rememberTtsSpeaker`） |
 
 ## 如何扩展功能
 

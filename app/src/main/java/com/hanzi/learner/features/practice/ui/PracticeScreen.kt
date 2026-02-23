@@ -42,7 +42,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hanzi.learner.R
 import com.hanzi.learner.features.practice.viewmodel.FlashState
 import com.hanzi.learner.features.practice.viewmodel.PracticeAction
-import com.hanzi.learner.features.practice.viewmodel.PracticeTtsViewModel
 import com.hanzi.learner.features.practice.viewmodel.PracticeUiState
 import com.hanzi.learner.features.practice.viewmodel.PracticeViewModel
 import com.hanzi.learner.character_writer.match.StrokeMatchConfig
@@ -63,12 +62,7 @@ fun PracticeScreen(
     reviewOnly: Boolean = false,
 ) {
     val context = LocalContext.current
-    val speaker = rememberTtsSpeaker(
-        context = context,
-        preferenceRepository = deps.ttsPreferenceRepository,
-        downloadManager = deps.ttsDownloadManager,
-        modelRepository = deps.modelRepository,
-    )
+    val speaker = rememberTtsSpeaker(context = context)
     val factory = remember(deps, reviewOnly) {
         PracticeViewModel.Factory(
             reviewOnly = reviewOnly,
@@ -78,29 +72,6 @@ fun PracticeScreen(
     }
     val viewModel: PracticeViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
-
-    val ttsViewModel: PracticeTtsViewModel = viewModel(
-        factory = remember(deps) {
-            PracticeTtsViewModel.Factory(
-                preferenceRepository = deps.ttsPreferenceRepository,
-                downloadManager = deps.ttsDownloadManager,
-                previewPlayer = deps.previewAudioPlayer,
-                modelRepository = deps.modelRepository,
-            )
-        },
-    )
-    val ttsUiState by ttsViewModel.uiState.collectAsState()
-
-    if (ttsUiState.showSelectionSheet && ttsUiState.models.isNotEmpty()) {
-        TtsModelSelectionSheet(
-            models = ttsUiState.models,
-            isPlayingPreview = ttsUiState.isPlayingPreview,
-            currentlyPlayingModelId = ttsUiState.currentlyPlayingModelId,
-            onModelSelected = ttsViewModel::selectModel,
-            onPreview = ttsViewModel::playPreview,
-            onDismiss = ttsViewModel::dismissSelection,
-        )
-    }
 
     PracticeFeedbackEffects(
         uiState = uiState,
