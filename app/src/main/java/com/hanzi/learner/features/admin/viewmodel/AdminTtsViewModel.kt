@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
+import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
@@ -24,7 +25,8 @@ data class AdminTtsUiState(
     val isPlayingPreview: Boolean = false,
     val currentlyPlayingModelId: String? = null,
     val settings: TtsSettings = TtsSettings.DEFAULT,
-    val currentEngineName: String? = null,
+    val currentEngine: TtsEngineInfo? = null,
+    val availableEngines: List<TtsEngineInfo> = emptyList(),
     val isChineseSupported: Boolean = false,
 )
 
@@ -104,12 +106,14 @@ class AdminTtsViewModel(
         viewModelScope.launch {
             combine(
                 ttsSpeaker.currentEngine,
+                ttsSpeaker.availableEngines,
                 ttsSpeaker.isChineseSupported
-            ) { engine, chineseSupported ->
-                engine?.name to chineseSupported
-            }.collect { (engineName, chineseSupported) ->
+            ) { engine, engines, chineseSupported ->
+                Triple(engine, engines, chineseSupported)
+            }.collect { (engine, engines, chineseSupported) ->
                 _uiState.value = _uiState.value.copy(
-                    currentEngineName = engineName,
+                    currentEngine = engine,
+                    availableEngines = engines,
                     isChineseSupported = chineseSupported,
                 )
             }
@@ -242,6 +246,10 @@ class AdminTtsViewModel(
 
     fun playSettingsPreview() {
         ttsSpeaker.speak("你好，这是语音设置预览。")
+    }
+
+    fun setEngine(enginePackageName: String) {
+        ttsSpeaker.setEngine(enginePackageName)
     }
 
     fun clearError() {

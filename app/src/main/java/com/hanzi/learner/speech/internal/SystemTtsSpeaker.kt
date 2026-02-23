@@ -1,9 +1,10 @@
 package com.hanzi.learner.speech.internal
 
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import android.speech.tts.Voice
 import android.util.Log
 import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
@@ -16,7 +17,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
+import kotlin.coroutines.resume
 
 private const val TAG = "SystemTtsSpeaker"
 
@@ -57,16 +60,33 @@ internal class SystemTtsSpeaker(
         initializeTts()
     }
 
-    private fun initializeTts() {
-        tts = TextToSpeech(appContext) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                Log.d(TAG, "System TTS engine initialized")
-                isEngineReady = true
-                checkChineseSupport()
-                updateEngineInfo()
-            } else {
-                Log.e(TAG, "System TTS initialization failed with status: $status")
-                _isReady.value = false
+    private fun initializeTts(engineName: String? = null) {
+        _isReady.value = false
+        isEngineReady = false
+        
+        tts = if (engineName != null) {
+            TextToSpeech(appContext, { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    Log.d(TAG, "System TTS engine initialized: $engineName")
+                    isEngineReady = true
+                    checkChineseSupport()
+                    updateEngineInfo()
+                } else {
+                    Log.e(TAG, "System TTS initialization failed with status: $status")
+                    _isReady.value = false
+                }
+            }, engineName)
+        } else {
+            TextToSpeech(appContext) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    Log.d(TAG, "System TTS engine initialized with default engine")
+                    isEngineReady = true
+                    checkChineseSupport()
+                    updateEngineInfo()
+                } else {
+                    Log.e(TAG, "System TTS initialization failed with status: $status")
+                    _isReady.value = false
+                }
             }
         }
     }
@@ -131,19 +151,49 @@ internal class SystemTtsSpeaker(
     private fun updateEngineInfo() {
         val ttsInstance = tts ?: return
 
-        val engines = ttsInstance.engines.map { engine ->
-            TtsEngineInfo(
-                name = engine.name,
-                packageName = engine.name,
-                isDefault = engine.name == ttsInstance.defaultEngine
+        val enginesFromTts = ttsInstance.engines.map { engine ->
+            engine.name to engine.name
+        }.toMap()
+
+        val enginesFromPackageManager = queryEnginesViaPackageManager()
+
+        val mergedEngines = mutableMapOf<String, TtsEngineInfo>()
+
+        enginesFromPackageManager.forEach { (packageName, label) ->
+            val isDefault = packageName == ttsInstance.defaultEngine
+            mergedEngines[packageName] = TtsEngineInfo(
+                name = packageName,
+                packageName = packageName,
+                label = label,
+                isDefault = isDefault,
+                isChineseSupported = false
             )
         }
-        _availableEngines.value = engines
+
+        enginesFromTts.forEach { (packageName, _) ->
+            if (!mergedEngines.containsKey(packageName)) {
+                val label = getEngineLabel(packageName)
+                val isDefault = packageName == ttsInstance.defaultEngine
+                mergedEngines[packageName] = TtsEngineInfo(
+                    name = packageName,
+                    packageName = packageName,
+                    label = label,
+                    isDefault = isDefault,
+                    isChineseSupported = false
+                )
+            }
+        }
+
+        val enginesList = mergedEngines.values.toList()
+        _availableEngines.value = enginesList
 
         val defaultEngine = ttsInstance.defaultEngine
-        val currentEngineInfo = engines.find { it.packageName == defaultEngine }
-            ?: engines.firstOrNull()
-        _currentEngine.value = currentEngineInfo
+        val currentEngineInfo = enginesList.find { it.packageName == defaultEngine }
+            ?: enginesList.firstOrNull()
+        
+        if (currentEngineInfo != null) {
+            _currentEngine.value = currentEngineInfo.copy(isChineseSupported = chineseSupported)
+        }
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             val voices = ttsInstance.voices?.map { voice ->
@@ -155,6 +205,95 @@ internal class SystemTtsSpeaker(
             } ?: emptyList()
             _availableVoices.value = voices
         }
+
+        scope.launch {
+            checkAllEnginesChineseSupport(enginesList)
+        }
+    }
+
+    private fun queryEnginesViaPackageManager(): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        try {
+            val intent = Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE)
+            val resolveInfos = appContext.packageManager
+                .queryIntentServices(intent, PackageManager.MATCH_ALL)
+
+            for (resolveInfo in resolveInfos) {
+                val packageName = resolveInfo.serviceInfo.packageName
+                val label = getEngineLabel(packageName)
+                result[packageName] = label
+                Log.d(TAG, "Found TTS engine via PackageManager: $packageName ($label)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error querying TTS engines via PackageManager", e)
+        }
+        return result
+    }
+
+    private fun getEngineLabel(packageName: String): String {
+        return try {
+            val appInfo = appContext.packageManager
+                .getApplicationInfo(packageName, 0)
+            appContext.packageManager.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not get label for engine: $packageName", e)
+            packageName
+        }
+    }
+
+    private suspend fun checkAllEnginesChineseSupport(engines: List<TtsEngineInfo>) {
+        val updatedEngines = engines.map { engine ->
+            val supported = checkEngineChineseSupport(engine.packageName)
+            engine.copy(isChineseSupported = supported)
+        }
+        _availableEngines.value = updatedEngines
+
+        val current = _currentEngine.value
+        if (current != null) {
+            val updatedCurrent = updatedEngines.find { it.packageName == current.packageName }
+            if (updatedCurrent != null) {
+                _currentEngine.value = updatedCurrent
+            }
+        }
+    }
+
+    private suspend fun checkEngineChineseSupport(enginePackageName: String): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            var tempTts: TextToSpeech? = null
+            tempTts = TextToSpeech(appContext, { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    val result = tempTts?.isLanguageAvailable(Locale.CHINESE) 
+                        ?: TextToSpeech.LANG_NOT_SUPPORTED
+                    Log.d(TAG, "Chinese support for $enginePackageName: $result")
+                    tempTts?.shutdown()
+                    if (continuation.isActive) {
+                        continuation.resume(result >= TextToSpeech.LANG_AVAILABLE)
+                    }
+                } else {
+                    Log.w(TAG, "Failed to initialize engine $enginePackageName for Chinese check")
+                    tempTts?.shutdown()
+                    if (continuation.isActive) {
+                        continuation.resume(false)
+                    }
+                }
+            }, enginePackageName)
+            
+            continuation.invokeOnCancellation {
+                tempTts?.shutdown()
+            }
+        }
+    }
+
+    override fun setEngine(enginePackageName: String) {
+        Log.d(TAG, "Switching to engine: $enginePackageName")
+        
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+        isEngineReady = false
+        _isReady.value = false
+
+        initializeTts(enginePackageName)
     }
 
     override fun speak(text: String) {

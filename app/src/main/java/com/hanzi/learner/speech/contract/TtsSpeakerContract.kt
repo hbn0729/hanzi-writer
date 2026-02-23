@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 data class TtsEngineInfo(
     val name: String,
     val packageName: String,
+    val label: String = name,
     val isDefault: Boolean = false,
+    val isChineseSupported: Boolean = false,
 )
 
 data class TtsVoiceInfo(
@@ -38,4 +40,8 @@ interface TtsEngineInfoProvider {
     val isChineseSupported: StateFlow<Boolean>
 }
 
-interface TtsSpeakerContract : TtsSpeaker, TtsSettingsControl, TtsEngineInfoProvider
+interface TtsEngineControl {
+    fun setEngine(enginePackageName: String)
+}
+
+interface TtsSpeakerContract : TtsSpeaker, TtsSettingsControl, TtsEngineInfoProvider, TtsEngineControl

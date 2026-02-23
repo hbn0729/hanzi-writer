@@ -1,5 +1,6 @@
 package com.hanzi.learner.features.admin.ui.tabs
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,20 +14,31 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.hanzi.learner.R
+import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelUiItem
 import com.hanzi.learner.speech.model.TtsSettings
@@ -40,7 +52,8 @@ fun TtsModelTab(
     isPlayingPreview: Boolean,
     currentlyPlayingModelId: String?,
     settings: TtsSettings,
-    currentEngineName: String?,
+    currentEngine: TtsEngineInfo?,
+    availableEngines: List<TtsEngineInfo>,
     isChineseSupported: Boolean,
     onDownload: (String) -> Unit,
     onCancel: (String) -> Unit,
@@ -51,6 +64,7 @@ fun TtsModelTab(
     onSpeechRateChange: (Float) -> Unit,
     onPitchChange: (Float) -> Unit,
     onSettingsPreview: () -> Unit,
+    onEngineChange: (String) -> Unit,
     onClearError: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -89,11 +103,13 @@ fun TtsModelTab(
         item {
             TtsSettingsCard(
                 settings = settings,
-                currentEngineName = currentEngineName,
+                currentEngine = currentEngine,
+                availableEngines = availableEngines,
                 isChineseSupported = isChineseSupported,
                 onSpeechRateChange = onSpeechRateChange,
                 onPitchChange = onPitchChange,
                 onPreview = onSettingsPreview,
+                onEngineChange = onEngineChange,
             )
         }
 
@@ -158,11 +174,13 @@ fun TtsModelTab(
 @Composable
 private fun TtsSettingsCard(
     settings: TtsSettings,
-    currentEngineName: String?,
+    currentEngine: TtsEngineInfo?,
+    availableEngines: List<TtsEngineInfo>,
     isChineseSupported: Boolean,
     onSpeechRateChange: (Float) -> Unit,
     onPitchChange: (Float) -> Unit,
     onPreview: () -> Unit,
+    onEngineChange: (String) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -176,19 +194,39 @@ private fun TtsSettingsCard(
                 style = MaterialTheme.typography.titleMedium,
             )
 
-            currentEngineName?.let { engineName ->
+            if (availableEngines.isNotEmpty()) {
+                Column {
+                    Text(
+                        text = "TTS引擎",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    EngineSelector(
+                        engines = availableEngines,
+                        currentEngine = currentEngine,
+                        onEngineSelected = onEngineChange,
+                    )
+                }
+            }
+
+            currentEngine?.let { engine ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "当前引擎",
+                        text = "中文支持",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = engineName,
+                        text = if (engine.isChineseSupported) "✓ 支持" else "✗ 不支持",
                         style = MaterialTheme.typography.bodyMedium,
+                        color = if (engine.isChineseSupported) 
+                            MaterialTheme.colorScheme.primary 
+                        else 
+                            MaterialTheme.colorScheme.error,
                     )
                 }
             }
@@ -207,7 +245,7 @@ private fun TtsSettingsCard(
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                         )
                         Text(
-                            text = "当前引擎不支持中文语音。建议安装\"科大讯飞语音引擎\"获得更好的中文语音效果。",
+                            text = "当前引擎不支持中文语音。请选择支持中文的引擎，或安装\"科大讯飞语音引擎\"获得更好的中文语音效果。",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                         )
@@ -271,6 +309,60 @@ private fun TtsSettingsCard(
                     modifier = Modifier.padding(end = 8.dp),
                 )
                 Text(text = "试听效果")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EngineSelector(
+    engines: List<TtsEngineInfo>,
+    currentEngine: TtsEngineInfo?,
+    onEngineSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        OutlinedTextField(
+            value = currentEngine?.label ?: currentEngine?.name ?: "选择引擎",
+            onValueChange = {},
+            readOnly = true,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            engines.forEach { engine ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(text = engine.label)
+                            if (!engine.isChineseSupported) {
+                                Text(
+                                    text = "不支持中文",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                    },
+                    onClick = {
+                        onEngineSelected(engine.packageName)
+                        expanded = false
+                    },
+                )
             }
         }
     }

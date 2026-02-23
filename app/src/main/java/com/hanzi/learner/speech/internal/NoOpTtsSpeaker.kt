@@ -44,4 +44,6 @@ internal class NoOpTtsSpeaker : TtsSpeakerContract {
     override fun stop() {}
 
     override fun shutdown() {}
+
+    override fun setEngine(enginePackageName: String) {}
 }

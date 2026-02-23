@@ -166,4 +166,7 @@ internal class SherpaOnnxTtsSpeaker(
         player.release()
         engine.shutdown()
     }
+
+    override fun setEngine(enginePackageName: String) {
+    }
 }

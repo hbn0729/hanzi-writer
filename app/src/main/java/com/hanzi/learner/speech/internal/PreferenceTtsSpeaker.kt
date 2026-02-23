@@ -171,6 +171,10 @@ internal class PreferenceTtsSpeaker(
         scope.cancel()
     }
 
+    override fun setEngine(enginePackageName: String) {
+        activeSpeaker.setEngine(enginePackageName)
+    }
+
     private data class SpeakerSelection(
         val modelId: String?,
         val downloadedPath: String?,

@@ -164,4 +164,8 @@ internal class FallbackTtsSpeaker(
         activeSpeaker = null
         _isReady.value = false
     }
+
+    override fun setEngine(enginePackageName: String) {
+        activeSpeaker?.setEngine(enginePackageName)
+    }
 }

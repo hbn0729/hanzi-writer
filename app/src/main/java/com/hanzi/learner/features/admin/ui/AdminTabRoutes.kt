@@ -244,7 +244,8 @@ fun TtsModelTabRoute(
         isPlayingPreview = state.isPlayingPreview,
         currentlyPlayingModelId = state.currentlyPlayingModelId,
         settings = state.settings,
-        currentEngineName = state.currentEngineName,
+        currentEngine = state.currentEngine,
+        availableEngines = state.availableEngines,
         isChineseSupported = state.isChineseSupported,
         onDownload = { viewModel.startDownload(it) },
         onCancel = { viewModel.cancelDownload(it) },
@@ -255,6 +256,7 @@ fun TtsModelTabRoute(
         onSpeechRateChange = { viewModel.setSpeechRate(it) },
         onPitchChange = { viewModel.setPitch(it) },
         onSettingsPreview = { viewModel.playSettingsPreview() },
+        onEngineChange = { viewModel.setEngine(it) },
         onClearError = { viewModel.clearError() },
         onBack = onBack,
     )
