@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsSpeakerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
 import com.hanzi.learner.speech.model.TtsModelUiItem
+import com.hanzi.learner.speech.model.TtsSettings
 import com.hanzi.learner.speech.internal.PREVIEW_TEXT
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,25 +19,22 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-/**
- * UI state for the TTS management screen.
- */
 data class AdminTtsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val models: List<TtsModelUiItem> = emptyList(),
     val isPlayingPreview: Boolean = false,
     val currentlyPlayingModelId: String? = null,
+    val settings: TtsSettings = TtsSettings.DEFAULT,
+    val currentEngineName: String? = null,
+    val isChineseSupported: Boolean = false,
 )
 
-/**
- * ViewModel for TTS model management in Admin screen.
- * Manages model selection, download, and preview playback.
- */
 class AdminTtsViewModel(
     private val preferenceRepository: TtsPreferenceRepositoryContract,
     private val downloadManager: TtsModelDownloadManagerContract,
     private val previewPlayer: PreviewAudioPlayerContract,
+    private val ttsSpeaker: TtsSpeakerContract,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminTtsUiState())
@@ -44,11 +43,10 @@ class AdminTtsViewModel(
     init {
         observeModels()
         observePreviewPlayer()
+        observeSettings()
+        observeTtsSpeaker()
     }
 
-    /**
-     * Combines model registry, download states, and user preference into UI state.
-     */
     private fun observeModels() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
@@ -80,15 +78,11 @@ class AdminTtsViewModel(
         }
     }
 
-    /**
-     * Observes preview player state to update UI.
-     */
     private fun observePreviewPlayer() {
         viewModelScope.launch {
             previewPlayer.isPlaying.collect { isPlaying ->
                 _uiState.value = _uiState.value.copy(
                     isPlayingPreview = isPlaying,
-                    // Clear currently playing model when stopped
                     currentlyPlayingModelId = if (isPlaying) {
                         _uiState.value.currentlyPlayingModelId
                     } else {
@@ -99,9 +93,30 @@ class AdminTtsViewModel(
         }
     }
 
-    /**
-     * Selects a model as the active TTS engine.
-     */
+    private fun observeSettings() {
+        viewModelScope.launch {
+            preferenceRepository.getSettings().collect { settings ->
+                _uiState.value = _uiState.value.copy(settings = settings)
+            }
+        }
+    }
+
+    private fun observeTtsSpeaker() {
+        viewModelScope.launch {
+            combine(
+                ttsSpeaker.currentEngine,
+                ttsSpeaker.isChineseSupported
+            ) { engine, chineseSupported ->
+                engine?.name to chineseSupported
+            }.collect { (engineName, chineseSupported) ->
+                _uiState.value = _uiState.value.copy(
+                    currentEngineName = engineName,
+                    isChineseSupported = chineseSupported,
+                )
+            }
+        }
+    }
+
     fun selectModel(modelId: String) {
         viewModelScope.launch {
             try {
@@ -114,9 +129,6 @@ class AdminTtsViewModel(
         }
     }
 
-    /**
-     * Starts downloading a model.
-     */
     fun startDownload(modelId: String) {
         viewModelScope.launch {
             try {
@@ -134,38 +146,24 @@ class AdminTtsViewModel(
         }
     }
 
-    /**
-     * Pauses an ongoing download.
-     */
     fun pauseDownload(modelId: String) {
         viewModelScope.launch {
             downloadManager.pauseDownload(modelId)
         }
     }
 
-    /**
-     * Resumes a paused download.
-     */
     fun resumeDownload(modelId: String) {
         viewModelScope.launch {
             downloadManager.resumeDownload(modelId)
         }
     }
 
-    /**
-     * Cancels and removes a download.
-     */
     fun cancelDownload(modelId: String) {
         viewModelScope.launch {
             downloadManager.cancelDownload(modelId)
         }
     }
 
-    /**
-     * Plays the preview audio for a model.
-     * For system TTS: uses system TTS directly.
-     * For downloadable models: requires model to be downloaded first.
-     */
     fun playPreview(modelId: String) {
         viewModelScope.launch {
             try {
@@ -225,16 +223,28 @@ class AdminTtsViewModel(
         }
     }
 
-    /**
-     * Stops the current preview playback.
-     */
     fun stopPreview() {
         previewPlayer.stop()
     }
 
-    /**
-     * Clears any error message.
-     */
+    fun setSpeechRate(rate: Float) {
+        viewModelScope.launch {
+            preferenceRepository.setSpeechRate(rate)
+            ttsSpeaker.setSpeechRate(rate)
+        }
+    }
+
+    fun setPitch(pitch: Float) {
+        viewModelScope.launch {
+            preferenceRepository.setPitch(pitch)
+            ttsSpeaker.setPitch(pitch)
+        }
+    }
+
+    fun playSettingsPreview() {
+        ttsSpeaker.speak("你好，这是语音设置预览。")
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
@@ -244,13 +254,11 @@ class AdminTtsViewModel(
         previewPlayer.release()
     }
 
-    /**
-     * Factory for creating AdminTtsViewModel instances.
-     */
     class Factory(
         private val preferenceRepository: TtsPreferenceRepositoryContract,
         private val downloadManager: TtsModelDownloadManagerContract,
         private val previewPlayer: PreviewAudioPlayerContract,
+        private val ttsSpeaker: TtsSpeakerContract,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -259,6 +267,7 @@ class AdminTtsViewModel(
                     preferenceRepository = preferenceRepository,
                     downloadManager = downloadManager,
                     previewPlayer = previewPlayer,
+                    ttsSpeaker = ttsSpeaker,
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

@@ -3,8 +3,11 @@ package com.hanzi.learner.speech.internal
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
 import android.util.Log
+import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
+import com.hanzi.learner.speech.contract.TtsVoiceInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,37 +20,38 @@ import java.util.Locale
 
 private const val TAG = "SystemTtsSpeaker"
 
-/**
- * TTS speaker using Android system TTS engine.
- * Falls back gracefully if system TTS is unavailable or doesn't support Chinese.
- */
 internal class SystemTtsSpeaker(
     context: Context,
 ) : TtsSpeakerContract {
 
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val pendingRequestHandler = PendingRequestHandler()
 
     private var tts: TextToSpeech? = null
     private var isEngineReady = false
-    private var isChineseSupported = false
+    private var chineseSupported = false
 
     private val _isReady = MutableStateFlow(false)
     override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
-    private data class PendingRequest(
-        val type: RequestType,
-        val text: String = "",
-        val character: String = "",
-        val phrase: String = "",
-    )
+    private val _speechRate = MutableStateFlow(1.0f)
+    override val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
 
-    private enum class RequestType {
-        SPEAK,
-        SPEAK_CHARACTER_AND_PHRASE,
-    }
+    private val _pitch = MutableStateFlow(1.0f)
+    override val pitch: StateFlow<Float> = _pitch.asStateFlow()
 
-    private var pendingRequest: PendingRequest? = null
+    private val _currentEngine = MutableStateFlow<TtsEngineInfo?>(null)
+    override val currentEngine: StateFlow<TtsEngineInfo?> = _currentEngine.asStateFlow()
+
+    private val _availableEngines = MutableStateFlow<List<TtsEngineInfo>>(emptyList())
+    override val availableEngines: StateFlow<List<TtsEngineInfo>> = _availableEngines.asStateFlow()
+
+    private val _availableVoices = MutableStateFlow<List<TtsVoiceInfo>>(emptyList())
+    override val availableVoices: StateFlow<List<TtsVoiceInfo>> = _availableVoices.asStateFlow()
+
+    private val _isChineseSupported = MutableStateFlow(false)
+    override val isChineseSupported: StateFlow<Boolean> = _isChineseSupported.asStateFlow()
 
     init {
         initializeTts()
@@ -59,6 +63,7 @@ internal class SystemTtsSpeaker(
                 Log.d(TAG, "System TTS engine initialized")
                 isEngineReady = true
                 checkChineseSupport()
+                updateEngineInfo()
             } else {
                 Log.e(TAG, "System TTS initialization failed with status: $status")
                 _isReady.value = false
@@ -72,10 +77,11 @@ internal class SystemTtsSpeaker(
         val chineseLocale = Locale.CHINESE
         val result = ttsInstance.isLanguageAvailable(chineseLocale)
 
-        isChineseSupported = result >= TextToSpeech.LANG_AVAILABLE
-        Log.d(TAG, "Chinese support check: $result (LANG_AVAILABLE=${TextToSpeech.LANG_AVAILABLE}), supported=$isChineseSupported")
+        chineseSupported = result >= TextToSpeech.LANG_AVAILABLE
+        _isChineseSupported.value = chineseSupported
+        Log.d(TAG, "Chinese support check: $result (LANG_AVAILABLE=${TextToSpeech.LANG_AVAILABLE}), supported=$chineseSupported")
 
-        if (isChineseSupported) {
+        if (chineseSupported) {
             val setLocaleResult = ttsInstance.setLanguage(chineseLocale)
             Log.d(TAG, "Set Chinese locale result: $setLocaleResult")
         }
@@ -99,20 +105,39 @@ internal class SystemTtsSpeaker(
             }
         })
 
-        _isReady.value = isEngineReady && isChineseSupported
+        _isReady.value = isEngineReady && chineseSupported
 
         if (_isReady.value) {
-            pendingRequest?.let { pending ->
-                Log.d(TAG, "Processing pending request after initialization")
-                pendingRequest = null
-                when (pending.type) {
-                    RequestType.SPEAK -> executeSpeak(pending.text)
-                    RequestType.SPEAK_CHARACTER_AND_PHRASE -> executeSpeakCharacterAndPhrase(
-                        pending.character,
-                        pending.phrase
-                    )
-                }
-            }
+            processPendingRequest()
+        }
+    }
+
+    private fun updateEngineInfo() {
+        val ttsInstance = tts ?: return
+
+        val engines = ttsInstance.engines.map { engine ->
+            TtsEngineInfo(
+                name = engine.name,
+                packageName = engine.name,
+                isDefault = engine.name == ttsInstance.defaultEngine
+            )
+        }
+        _availableEngines.value = engines
+
+        val defaultEngine = ttsInstance.defaultEngine
+        val currentEngineInfo = engines.find { it.packageName == defaultEngine }
+            ?: engines.firstOrNull()
+        _currentEngine.value = currentEngineInfo
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            val voices = ttsInstance.voices?.map { voice ->
+                TtsVoiceInfo(
+                    name = voice.name,
+                    locale = voice.locale.toString(),
+                    quality = voice.quality
+                )
+            } ?: emptyList()
+            _availableVoices.value = voices
         }
     }
 
@@ -120,7 +145,7 @@ internal class SystemTtsSpeaker(
         Log.d(TAG, "speak() called: $text, isReady: ${_isReady.value}")
         if (!_isReady.value) {
             Log.w(TAG, "Speaker not ready, queuing speak request")
-            pendingRequest = PendingRequest(RequestType.SPEAK, text = text)
+            pendingRequestHandler.enqueue(TtsRequest.Speak(text))
             return
         }
         executeSpeak(text)
@@ -141,11 +166,7 @@ internal class SystemTtsSpeaker(
         Log.d(TAG, "speakCharacterAndPhrase() called: '$character', '$phrase', isReady: ${_isReady.value}")
         if (!_isReady.value) {
             Log.w(TAG, "Speaker not ready, queuing speakCharacterAndPhrase request")
-            pendingRequest = PendingRequest(
-                RequestType.SPEAK_CHARACTER_AND_PHRASE,
-                character = character,
-                phrase = phrase
-            )
+            pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
             return
         }
         executeSpeakCharacterAndPhrase(character, phrase)
@@ -170,6 +191,40 @@ internal class SystemTtsSpeaker(
                 ttsInstance.speak(phrase, TextToSpeech.QUEUE_ADD, null, phraseUtteranceId)
             }
         }
+    }
+
+    private fun processPendingRequest() {
+        Log.d(TAG, "Processing pending request after initialization")
+        pendingRequestHandler.processIfReady(_isReady.value) { request ->
+            when (request) {
+                is TtsRequest.Speak -> executeSpeak(request.text)
+                is TtsRequest.SpeakCharacterAndPhrase -> executeSpeakCharacterAndPhrase(
+                    request.character,
+                    request.phrase
+                )
+            }
+        }
+    }
+
+    override fun setSpeechRate(rate: Float) {
+        val ttsInstance = tts ?: return
+        val clampedRate = rate.coerceIn(0.5f, 2.0f)
+        ttsInstance.setSpeechRate(clampedRate)
+        _speechRate.value = clampedRate
+        Log.d(TAG, "Speech rate set to: $clampedRate")
+    }
+
+    override fun setPitch(pitch: Float) {
+        val ttsInstance = tts ?: return
+        val clampedPitch = pitch.coerceIn(0.5f, 2.0f)
+        ttsInstance.setPitch(clampedPitch)
+        _pitch.value = clampedPitch
+        Log.d(TAG, "Pitch set to: $clampedPitch")
+    }
+
+    override fun stop() {
+        tts?.stop()
+        Log.d(TAG, "TTS stopped")
     }
 
     override fun shutdown() {

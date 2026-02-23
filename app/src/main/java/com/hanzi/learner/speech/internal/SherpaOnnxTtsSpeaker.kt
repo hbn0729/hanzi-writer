@@ -3,7 +3,9 @@ package com.hanzi.learner.speech.internal
 import android.util.Log
 import com.hanzi.learner.speech.contract.AudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsEngineContract
+import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
+import com.hanzi.learner.speech.contract.TtsVoiceInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,25 +23,30 @@ internal class SherpaOnnxTtsSpeaker(
     private val player: AudioPlayerContract,
 ) : TtsSpeakerContract {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val pendingRequestHandler = PendingRequestHandler()
     private var currentJob: Job? = null
     private var isPlayerReady = false
 
     private val _isReady = MutableStateFlow(false)
     override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
-    private data class PendingRequest(
-        val type: RequestType,
-        val text: String = "",
-        val character: String = "",
-        val phrase: String = "",
-    )
+    private val _speechRate = MutableStateFlow(1.0f)
+    override val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
 
-    private enum class RequestType {
-        SPEAK,
-        SPEAK_CHARACTER_AND_PHRASE,
-    }
+    private val _pitch = MutableStateFlow(1.0f)
+    override val pitch: StateFlow<Float> = _pitch.asStateFlow()
 
-    private var pendingRequest: PendingRequest? = null
+    private val _currentEngine = MutableStateFlow<TtsEngineInfo?>(null)
+    override val currentEngine: StateFlow<TtsEngineInfo?> = _currentEngine.asStateFlow()
+
+    private val _availableEngines = MutableStateFlow<List<TtsEngineInfo>>(emptyList())
+    override val availableEngines: StateFlow<List<TtsEngineInfo>> = _availableEngines.asStateFlow()
+
+    private val _availableVoices = MutableStateFlow<List<TtsVoiceInfo>>(emptyList())
+    override val availableVoices: StateFlow<List<TtsVoiceInfo>> = _availableVoices.asStateFlow()
+
+    private val _isChineseSupported = MutableStateFlow(true)
+    override val isChineseSupported: StateFlow<Boolean> = _isChineseSupported.asStateFlow()
 
     init {
         scope.launch {
@@ -65,17 +72,21 @@ internal class SherpaOnnxTtsSpeaker(
         _isReady.value = nowReady
 
         if (!wasReady && nowReady) {
-            val pending = pendingRequest
-            if (pending != null) {
-                Log.d(TAG, "TTS is now fully ready, playing pending request: $pending")
-                pendingRequest = null
-                when (pending.type) {
-                    RequestType.SPEAK -> executeSpeak(pending.text)
-                    RequestType.SPEAK_CHARACTER_AND_PHRASE -> executeSpeakCharacterAndPhrase(
-                        pending.character,
-                        pending.phrase
-                    )
-                }
+            processPendingRequest()
+        }
+    }
+
+    private fun processPendingRequest() {
+        if (pendingRequestHandler.hasPending) {
+            Log.d(TAG, "TTS is now fully ready, playing pending request")
+        }
+        pendingRequestHandler.processIfReady(_isReady.value) { request ->
+            when (request) {
+                is TtsRequest.Speak -> executeSpeak(request.text)
+                is TtsRequest.SpeakCharacterAndPhrase -> executeSpeakCharacterAndPhrase(
+                    request.character,
+                    request.phrase
+                )
             }
         }
     }
@@ -84,7 +95,7 @@ internal class SherpaOnnxTtsSpeaker(
         Log.d(TAG, "speak() called: $text, isReady: ${_isReady.value}")
         if (!_isReady.value) {
             Log.w(TAG, "Speaker not ready, queuing speak request")
-            pendingRequest = PendingRequest(RequestType.SPEAK, text = text)
+            pendingRequestHandler.enqueue(TtsRequest.Speak(text))
             return
         }
         executeSpeak(text)
@@ -107,11 +118,7 @@ internal class SherpaOnnxTtsSpeaker(
         Log.d(TAG, "speakCharacterAndPhrase() called: '$character', '$phrase', isReady: ${_isReady.value}")
         if (!_isReady.value) {
             Log.w(TAG, "Speaker not ready, queuing speakCharacterAndPhrase request")
-            pendingRequest = PendingRequest(
-                RequestType.SPEAK_CHARACTER_AND_PHRASE,
-                character = character,
-                phrase = phrase
-            )
+            pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
             return
         }
         executeSpeakCharacterAndPhrase(character, phrase)
@@ -139,6 +146,19 @@ internal class SherpaOnnxTtsSpeaker(
                 }
             }
         }
+    }
+
+    override fun setSpeechRate(rate: Float) {
+        _speechRate.value = rate.coerceIn(0.5f, 2.0f)
+    }
+
+    override fun setPitch(pitch: Float) {
+        _pitch.value = pitch.coerceIn(0.5f, 2.0f)
+    }
+
+    override fun stop() {
+        currentJob?.cancel()
+        player.stop()
     }
 
     override fun shutdown() {

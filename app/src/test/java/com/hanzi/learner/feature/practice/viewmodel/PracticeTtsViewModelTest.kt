@@ -5,6 +5,7 @@ import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
+import com.hanzi.learner.speech.model.TtsSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -83,12 +84,24 @@ class PracticeTtsViewModelTest {
 
     private class FakePreferenceRepository(initial: String?) : TtsPreferenceRepositoryContract {
         val selected = MutableStateFlow<String?>(initial)
+        private val settings = MutableStateFlow(TtsSettings.DEFAULT)
+
         override fun getSelectedModelId(): Flow<String?> = selected
         override suspend fun setSelectedModelId(modelId: String?) {
             selected.value = modelId
         }
         override suspend fun clearSelection() {
             selected.value = null
+        }
+        override fun getSettings(): Flow<TtsSettings> = settings
+        override suspend fun setSpeechRate(rate: Float) {
+            settings.value = settings.value.copy(speechRate = rate)
+        }
+        override suspend fun setPitch(pitch: Float) {
+            settings.value = settings.value.copy(pitch = pitch)
+        }
+        override suspend fun updateSettings(newSettings: TtsSettings) {
+            settings.value = newSettings
         }
     }
 
@@ -144,4 +157,3 @@ class PracticeTtsViewModelTest {
         }
     }
 }
-

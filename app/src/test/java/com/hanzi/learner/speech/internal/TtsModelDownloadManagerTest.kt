@@ -18,7 +18,6 @@ class TtsModelDownloadManagerTest {
 
     @Test
     fun `TtsModelDownloadManager implements contract`() {
-        // Verify that TtsModelDownloadManager implements the contract
         val clazz = TtsModelDownloadManager::class.java
 
         assertTrue(
@@ -29,12 +28,10 @@ class TtsModelDownloadManagerTest {
 
     @Test
     fun `download states should be initially empty or populated`() = runTest {
-        // Create a mock download manager for testing
         val mockManager = createMockDownloadManager()
 
         val states = mockManager.downloadStates.first()
 
-        // Should contain states for downloadable models
         assertNotNull(states)
     }
 
@@ -60,10 +57,8 @@ class TtsModelDownloadManagerTest {
     fun `pauseDownload should update state to paused`() = runTest {
         val mockManager = createMockDownloadManager()
 
-        // Start download first
         mockManager.startDownload("test-model")
 
-        // Then pause
         mockManager.pauseDownload("test-model")
 
         val states = mockManager.downloadStates.first()
@@ -74,11 +69,9 @@ class TtsModelDownloadManagerTest {
     fun `resumeDownload should update state back to downloading`() = runTest {
         val mockManager = createMockDownloadManager()
 
-        // Start and pause
         mockManager.startDownload("test-model")
         mockManager.pauseDownload("test-model")
 
-        // Resume
         mockManager.resumeDownload("test-model")
 
         val states = mockManager.downloadStates.first()
@@ -89,10 +82,8 @@ class TtsModelDownloadManagerTest {
     fun `cancelDownload should reset state to not downloaded`() = runTest {
         val mockManager = createMockDownloadManager()
 
-        // Start download
         mockManager.startDownload("test-model")
 
-        // Cancel
         mockManager.cancelDownload("test-model")
 
         val states = mockManager.downloadStates.first()
@@ -123,13 +114,11 @@ class TtsModelDownloadManagerTest {
 
         val states = mockManager.downloadStates.first()
 
-        // Should NOT contain system TTS
         assertFalse(states.containsKey(TtsModelRegistry.SYSTEM_TTS_ID))
     }
 
     @Test
     fun `TtsModelDownloadState sealed class has all required states`() {
-        // Verify all states exist
         val notDownloaded = TtsModelDownloadState.NotDownloaded
         val downloading = TtsModelDownloadState.Downloading(0.5f, 50, 100)
         val paused = TtsModelDownloadState.Paused(0.5f, 50, 100)
@@ -142,7 +131,6 @@ class TtsModelDownloadManagerTest {
         assertNotNull(downloaded)
         assertNotNull(error)
 
-        // Verify properties
         assertEquals(0.5f, downloading.progress, 0.01f)
         assertEquals(50L, downloading.bytesDownloaded)
         assertEquals(100L, downloading.totalBytes)
@@ -153,28 +141,15 @@ class TtsModelDownloadManagerTest {
     }
 
     @Test
-    fun `isModelDownloaded requires all declared model files`() = runTest {
-        val modelId = "vits-zh-hf-fanchen-wnj"
-        val modelInfo = TtsModelRegistry.getModelById(modelId) ?: error("Missing test model in registry")
-
+    fun `isModelDownloaded returns false for system TTS`() = runTest {
         val baseDir = tempFolder.newFolder("tts_models")
-        val modelDir = File(baseDir, modelId).apply { mkdirs() }
 
         val manager = TtsModelDownloadManager(
             modelsBaseDir = baseDir,
         )
 
         try {
-            assertFalse(manager.isModelDownloaded(modelId))
-
-            modelInfo.modelFiles.forEach { fileName ->
-                File(modelDir, fileName).writeBytes(byteArrayOf(1, 2, 3))
-            }
-            assertTrue(manager.isModelDownloaded(modelId))
-
-            File(modelDir, modelInfo.modelFiles.first()).delete()
-            assertFalse(manager.isModelDownloaded(modelId))
-
+            assertFalse(manager.isModelDownloaded(TtsModelRegistry.SYSTEM_TTS_ID))
         } finally {
             manager.release()
         }

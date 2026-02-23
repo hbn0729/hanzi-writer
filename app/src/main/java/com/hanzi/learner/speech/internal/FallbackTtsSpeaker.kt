@@ -3,7 +3,9 @@ package com.hanzi.learner.speech.internal
 import android.content.Context
 import android.util.Log
 import com.hanzi.learner.speech.SpeechModule
+import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
+import com.hanzi.learner.speech.contract.TtsVoiceInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,9 +19,6 @@ private const val TAG = "FallbackTtsSpeaker"
 
 private const val SYSTEM_TTS_INIT_TIMEOUT_MS = 3000L
 
-/**
- * TTS speaker that attempts system TTS first, falls back to built-in TTS if unavailable.
- */
 internal class FallbackTtsSpeaker(
     context: Context,
     private val config: SpeechModule.TtsConfig = SpeechModule.TtsConfig(),
@@ -27,6 +26,7 @@ internal class FallbackTtsSpeaker(
 
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val pendingRequestHandler = PendingRequestHandler()
 
     private var activeSpeaker: TtsSpeakerContract? = null
     private var systemTtsSpeaker: SystemTtsSpeaker? = null
@@ -35,19 +35,23 @@ internal class FallbackTtsSpeaker(
     private val _isReady = MutableStateFlow(false)
     override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
-    private data class PendingRequest(
-        val type: RequestType,
-        val text: String = "",
-        val character: String = "",
-        val phrase: String = "",
-    )
+    private val _speechRate = MutableStateFlow(1.0f)
+    override val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
 
-    private enum class RequestType {
-        SPEAK,
-        SPEAK_CHARACTER_AND_PHRASE,
-    }
+    private val _pitch = MutableStateFlow(1.0f)
+    override val pitch: StateFlow<Float> = _pitch.asStateFlow()
 
-    private var pendingRequest: PendingRequest? = null
+    private val _currentEngine = MutableStateFlow<TtsEngineInfo?>(null)
+    override val currentEngine: StateFlow<TtsEngineInfo?> = _currentEngine.asStateFlow()
+
+    private val _availableEngines = MutableStateFlow<List<TtsEngineInfo>>(emptyList())
+    override val availableEngines: StateFlow<List<TtsEngineInfo>> = _availableEngines.asStateFlow()
+
+    private val _availableVoices = MutableStateFlow<List<TtsVoiceInfo>>(emptyList())
+    override val availableVoices: StateFlow<List<TtsVoiceInfo>> = _availableVoices.asStateFlow()
+
+    private val _isChineseSupported = MutableStateFlow(false)
+    override val isChineseSupported: StateFlow<Boolean> = _isChineseSupported.asStateFlow()
 
     init {
         attemptSystemTts()
@@ -64,6 +68,7 @@ internal class FallbackTtsSpeaker(
                     Log.d(TAG, "System TTS is ready, using it")
                     activeSpeaker = systemTtsSpeaker
                     _isReady.value = true
+                    syncSpeakerState()
                     processPendingRequest()
                     return@launch
                 }
@@ -87,21 +92,32 @@ internal class FallbackTtsSpeaker(
             builtInSpeaker?.isReady?.collect { ready ->
                 _isReady.value = ready
                 if (ready) {
+                    syncSpeakerState()
                     processPendingRequest()
                 }
             }
         }
     }
 
+    private fun syncSpeakerState() {
+        activeSpeaker?.let { speaker ->
+            _speechRate.value = speaker.speechRate.value
+            _pitch.value = speaker.pitch.value
+            _currentEngine.value = speaker.currentEngine.value
+            _availableEngines.value = speaker.availableEngines.value
+            _availableVoices.value = speaker.availableVoices.value
+            _isChineseSupported.value = speaker.isChineseSupported.value
+        }
+    }
+
     private fun processPendingRequest() {
-        pendingRequest?.let { pending ->
-            Log.d(TAG, "Processing pending request")
-            pendingRequest = null
-            when (pending.type) {
-                RequestType.SPEAK -> speak(pending.text)
-                RequestType.SPEAK_CHARACTER_AND_PHRASE -> speakCharacterAndPhrase(
-                    pending.character,
-                    pending.phrase
+        Log.d(TAG, "Processing pending request")
+        pendingRequestHandler.processIfReady(_isReady.value) { request ->
+            when (request) {
+                is TtsRequest.Speak -> speak(request.text)
+                is TtsRequest.SpeakCharacterAndPhrase -> speakCharacterAndPhrase(
+                    request.character,
+                    request.phrase
                 )
             }
         }
@@ -111,7 +127,7 @@ internal class FallbackTtsSpeaker(
         val speaker = activeSpeaker
         if (speaker == null || !_isReady.value) {
             Log.w(TAG, "Speaker not ready, queuing speak request")
-            pendingRequest = PendingRequest(RequestType.SPEAK, text = text)
+            pendingRequestHandler.enqueue(TtsRequest.Speak(text))
             return
         }
         speaker.speak(text)
@@ -121,14 +137,24 @@ internal class FallbackTtsSpeaker(
         val speaker = activeSpeaker
         if (speaker == null || !_isReady.value) {
             Log.w(TAG, "Speaker not ready, queuing speakCharacterAndPhrase request")
-            pendingRequest = PendingRequest(
-                RequestType.SPEAK_CHARACTER_AND_PHRASE,
-                character = character,
-                phrase = phrase
-            )
+            pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
             return
         }
         speaker.speakCharacterAndPhrase(character, phrase)
+    }
+
+    override fun setSpeechRate(rate: Float) {
+        _speechRate.value = rate
+        activeSpeaker?.setSpeechRate(rate)
+    }
+
+    override fun setPitch(pitch: Float) {
+        _pitch.value = pitch
+        activeSpeaker?.setPitch(pitch)
+    }
+
+    override fun stop() {
+        activeSpeaker?.stop()
     }
 
     override fun shutdown() {

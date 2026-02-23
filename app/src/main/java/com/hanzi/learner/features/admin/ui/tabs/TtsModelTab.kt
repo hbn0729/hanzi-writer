@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.hanzi.learner.R
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelUiItem
+import com.hanzi.learner.speech.model.TtsSettings
 
 @Composable
 fun TtsModelTab(
@@ -37,12 +39,18 @@ fun TtsModelTab(
     error: String?,
     isPlayingPreview: Boolean,
     currentlyPlayingModelId: String?,
+    settings: TtsSettings,
+    currentEngineName: String?,
+    isChineseSupported: Boolean,
     onDownload: (String) -> Unit,
     onCancel: (String) -> Unit,
     onEnable: (String) -> Unit,
     onPause: (String) -> Unit,
     onResume: (String) -> Unit,
     onPreview: (String) -> Unit,
+    onSpeechRateChange: (Float) -> Unit,
+    onPitchChange: (Float) -> Unit,
+    onSettingsPreview: () -> Unit,
     onClearError: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -50,9 +58,8 @@ fun TtsModelTab(
         modifier = modifier.padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text(text = "语音模型", style = MaterialTheme.typography.headlineSmall) }
+        item { Text(text = "语音设置", style = MaterialTheme.typography.headlineSmall) }
 
-        // Error message
         if (error != null) {
             item {
                 Card(
@@ -79,7 +86,25 @@ fun TtsModelTab(
             }
         }
 
-        // Active model info
+        item {
+            TtsSettingsCard(
+                settings = settings,
+                currentEngineName = currentEngineName,
+                isChineseSupported = isChineseSupported,
+                onSpeechRateChange = onSpeechRateChange,
+                onPitchChange = onPitchChange,
+                onPreview = onSettingsPreview,
+            )
+        }
+
+        item {
+            Text(
+                text = "语音模型",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+
         activeModelId?.let { activeId ->
             val activeModel = models.find { it.info.id == activeId }
             activeModel?.let { model ->
@@ -110,7 +135,6 @@ fun TtsModelTab(
             }
         }
 
-        // Model list
         items(models, key = { it.info.id }) { model ->
             TtsModelCard(
                 model = model,
@@ -127,6 +151,127 @@ fun TtsModelTab(
         item {
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onBack) { Text(text = "返回") }
+        }
+    }
+}
+
+@Composable
+private fun TtsSettingsCard(
+    settings: TtsSettings,
+    currentEngineName: String?,
+    isChineseSupported: Boolean,
+    onSpeechRateChange: (Float) -> Unit,
+    onPitchChange: (Float) -> Unit,
+    onPreview: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = "语音参数",
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            currentEngineName?.let { engineName ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "当前引擎",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = engineName,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+
+            if (!isChineseSupported) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "💡 提示",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                        Text(
+                            text = "当前引擎不支持中文语音。建议安装\"科大讯飞语音引擎\"获得更好的中文语音效果。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                    }
+                }
+            }
+
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "语速",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = String.format("%.1fx", settings.speechRate),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                Slider(
+                    value = settings.speechRate,
+                    onValueChange = onSpeechRateChange,
+                    valueRange = TtsSettings.MIN_SPEECH_RATE..TtsSettings.MAX_SPEECH_RATE,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "音调",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = String.format("%.1f", settings.pitch),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                Slider(
+                    value = settings.pitch,
+                    onValueChange = onPitchChange,
+                    valueRange = TtsSettings.MIN_PITCH..TtsSettings.MAX_PITCH,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            OutlinedButton(
+                onClick = onPreview,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_volume),
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+                Text(text = "试听效果")
+            }
         }
     }
 }
@@ -158,7 +303,6 @@ private fun TtsModelCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Title row with status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -178,7 +322,6 @@ private fun TtsModelCard(
                     }
                 }
 
-                // Status indicator
                 when (val state = model.downloadState) {
                     is TtsModelDownloadState.NotDownloaded -> {
                         if (isSystemTts) {
@@ -212,7 +355,6 @@ private fun TtsModelCard(
                 }
             }
 
-            // Progress bar for downloading/paused states
             when (val state = model.downloadState) {
                 is TtsModelDownloadState.Downloading -> {
                     LinearProgressIndicator(
@@ -229,7 +371,6 @@ private fun TtsModelCard(
                 else -> {}
             }
 
-            // Error message
             if (model.downloadState is TtsModelDownloadState.Error) {
                 val errorState = model.downloadState as TtsModelDownloadState.Error
                 Text(
@@ -239,13 +380,11 @@ private fun TtsModelCard(
                 )
             }
 
-            // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Preview button (always shown)
                 IconButton(
                     onClick = { onPreview(model.info.id) },
                     enabled = !isPlayingPreview,
@@ -258,7 +397,6 @@ private fun TtsModelCard(
                         )
                 }
 
-                // Action buttons based on state
                 when (val state = model.downloadState) {
                     is TtsModelDownloadState.NotDownloaded -> {
                         if (!isSystemTts) {
@@ -266,7 +404,6 @@ private fun TtsModelCard(
                                 Text(text = "下载")
                             }
                         } else {
-                            // System TTS: show enable button directly
                             if (model.isSelected) {
                                 OutlinedButton(enabled = false, onClick = {}) {
                                     Text(text = "已启用")
