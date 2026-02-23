@@ -3,8 +3,9 @@ package com.hanzi.learner.features.practice.viewmodel
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelRegistry
+import com.hanzi.learner.speech.model.TtsModelInfo
 import com.hanzi.learner.speech.model.TtsSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,8 +19,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -43,11 +42,13 @@ class PracticeTtsViewModelTest {
         val preference = FakePreferenceRepository(initial = null)
         val downloadManager = FakeDownloadManager()
         val previewPlayer = FakePreviewPlayer()
+        val modelRepository = FakeModelRepository()
 
         val viewModel = PracticeTtsViewModel(
             preferenceRepository = preference,
             downloadManager = downloadManager,
             previewPlayer = previewPlayer,
+            modelRepository = modelRepository,
         )
 
         advanceUntilIdle()
@@ -65,21 +66,23 @@ class PracticeTtsViewModelTest {
         val preference = FakePreferenceRepository(initial = null)
         val downloadManager = FakeDownloadManager()
         val previewPlayer = FakePreviewPlayer()
+        val modelRepository = FakeModelRepository()
 
         val viewModel = PracticeTtsViewModel(
             preferenceRepository = preference,
             downloadManager = downloadManager,
             previewPlayer = previewPlayer,
+            modelRepository = modelRepository,
         )
 
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.showSelectionSheet)
 
-        viewModel.selectModel(TtsModelRegistry.SYSTEM_TTS_ID)
+        viewModel.selectModel(TtsModelRepositoryContract.SYSTEM_TTS_ID)
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.showSelectionSheet)
-        assertTrue(preference.selected.value == TtsModelRegistry.SYSTEM_TTS_ID)
+        assertTrue(preference.selected.value == TtsModelRepositoryContract.SYSTEM_TTS_ID)
     }
 
     private class FakePreferenceRepository(initial: String?) : TtsPreferenceRepositoryContract {
@@ -155,5 +158,25 @@ class PracticeTtsViewModelTest {
         override fun release() {
             _isPlaying.value = false
         }
+    }
+
+    private class FakeModelRepository : TtsModelRepositoryContract {
+        private val systemTts = TtsModelInfo(
+            id = TtsModelRepositoryContract.SYSTEM_TTS_ID,
+            name = "System TTS",
+            description = "System TTS",
+            downloadUrl = null,
+            previewAudioUrl = "",
+            fileSizeBytes = 0,
+            modelFiles = emptyList(),
+            isSystemTts = true,
+        )
+
+        override fun getAvailableModels(): List<TtsModelInfo> = listOf(systemTts)
+
+        override fun getModelById(id: String): TtsModelInfo? =
+            if (id == TtsModelRepositoryContract.SYSTEM_TTS_ID) systemTts else null
+
+        override fun isSystemTts(id: String): Boolean = id == TtsModelRepositoryContract.SYSTEM_TTS_ID
     }
 }

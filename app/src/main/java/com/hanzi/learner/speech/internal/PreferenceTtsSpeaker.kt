@@ -5,10 +5,10 @@ import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.SpeechModule
 import com.hanzi.learner.speech.contract.TtsEngineInfo
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
 import com.hanzi.learner.speech.contract.TtsVoiceInfo
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +25,7 @@ internal class PreferenceTtsSpeaker(
     context: Context,
     preferenceRepository: TtsPreferenceRepositoryContract,
     downloadManager: TtsModelDownloadManagerContract,
+    private val modelRepository: TtsModelRepositoryContract,
 ) : TtsSpeakerContract {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -91,9 +92,9 @@ internal class PreferenceTtsSpeaker(
     private fun createSpeakerForSelection(selection: SpeakerSelection): TtsSpeakerContract {
         return when {
             selection.modelId == null -> NoOpTtsSpeaker()
-            selection.modelId == TtsModelRegistry.SYSTEM_TTS_ID -> SystemTtsSpeaker(appContext)
+            modelRepository.isSystemTts(selection.modelId) -> SystemTtsSpeaker(appContext)
             selection.downloadedPath != null -> {
-                val modelInfo = TtsModelRegistry.getModelById(selection.modelId) ?: return NoOpTtsSpeaker()
+                val modelInfo = modelRepository.getModelById(selection.modelId) ?: return NoOpTtsSpeaker()
                 SpeechModule.createFilesystemTtsSpeaker(
                     context = appContext,
                     modelDirPath = selection.downloadedPath,

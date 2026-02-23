@@ -2,6 +2,7 @@ package com.hanzi.learner.speech
 
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,7 @@ class SpeechModuleTest {
     fun `isModelReady should return true for system TTS`() = runTest {
         val mockDownloadManager = createMockDownloadManager()
 
-        val result = SpeechModule.isModelReady(TtsModelRegistry.SYSTEM_TTS_ID, mockDownloadManager)
+        val result = SpeechModule.isModelReady(TtsModelRepositoryContract.SYSTEM_TTS_ID, mockDownloadManager)
 
         assertTrue(result)
     }
@@ -82,17 +83,15 @@ class SpeechModuleTest {
 
     @Test
     fun `TtsModelRegistry should contain expected models`() {
-        val models = TtsModelRegistry.getAvailableModels()
+        val registry = TtsModelRegistry()
+        val models = registry.getAvailableModels()
 
-        // Should have at least system TTS and some downloadable models
         assertTrue(models.isNotEmpty())
 
-        // Should have system TTS
         val systemTts = models.find { it.isSystemTts }
         assertNotNull(systemTts)
-        assertEquals(TtsModelRegistry.SYSTEM_TTS_ID, systemTts?.id)
+        assertEquals(TtsModelRepositoryContract.SYSTEM_TTS_ID, systemTts?.id)
 
-        // All models should have required fields
         models.forEach { model ->
             assertNotNull(model.id)
             assertNotNull(model.name)
@@ -109,11 +108,12 @@ class SpeechModuleTest {
 
     @Test
     fun `getModelById should return correct model`() {
-        val systemTts = TtsModelRegistry.getModelById(TtsModelRegistry.SYSTEM_TTS_ID)
+        val registry = TtsModelRegistry()
+        val systemTts = registry.getModelById(TtsModelRepositoryContract.SYSTEM_TTS_ID)
         assertNotNull(systemTts)
         assertTrue(systemTts?.isSystemTts == true)
 
-        val nonExistent = TtsModelRegistry.getModelById("non-existent")
+        val nonExistent = registry.getModelById("non-existent")
         assertNull(nonExistent)
     }
 

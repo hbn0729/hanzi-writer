@@ -1,5 +1,6 @@
 package com.hanzi.learner.speech.model
 
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -7,7 +8,8 @@ class TtsModelRegistryTest {
 
     @Test
     fun `getAvailableModels returns at least system TTS`() {
-        val models = TtsModelRegistry.getAvailableModels()
+        val registry = TtsModelRegistry()
+        val models = registry.getAvailableModels()
 
         assertTrue("Should return at least 1 model", models.size >= 1)
 
@@ -17,21 +19,24 @@ class TtsModelRegistryTest {
 
     @Test
     fun `getModelById returns correct model for system TTS ID`() {
-        val systemTts = TtsModelRegistry.getModelById(TtsModelRegistry.SYSTEM_TTS_ID)
+        val registry = TtsModelRegistry()
+        val systemTts = registry.getModelById(TtsModelRepositoryContract.SYSTEM_TTS_ID)
         assertNotNull("Should return system TTS model", systemTts)
-        assertEquals("System TTS should have correct ID", TtsModelRegistry.SYSTEM_TTS_ID, systemTts?.id)
+        assertEquals("System TTS should have correct ID", TtsModelRepositoryContract.SYSTEM_TTS_ID, systemTts?.id)
         assertTrue("System TTS should have isSystemTts flag", systemTts?.isSystemTts == true)
     }
 
     @Test
     fun `getModelById returns null for invalid ID`() {
-        val result = TtsModelRegistry.getModelById("non-existent-model")
+        val registry = TtsModelRegistry()
+        val result = registry.getModelById("non-existent-model")
         assertNull("Should return null for invalid ID", result)
     }
 
     @Test
     fun `system TTS model has null downloadUrl and empty modelFiles`() {
-        val systemTts = TtsModelRegistry.getModelById(TtsModelRegistry.SYSTEM_TTS_ID)
+        val registry = TtsModelRegistry()
+        val systemTts = registry.getModelById(TtsModelRepositoryContract.SYSTEM_TTS_ID)
         assertNotNull("System TTS should exist", systemTts)
 
         systemTts?.let {
@@ -43,8 +48,9 @@ class TtsModelRegistryTest {
 
     @Test
     fun `isSystemTts returns true only for system TTS ID`() {
-        assertTrue("Should return true for system TTS ID", TtsModelRegistry.isSystemTts(TtsModelRegistry.SYSTEM_TTS_ID))
-        assertFalse("Should return false for invalid ID", TtsModelRegistry.isSystemTts("invalid-id"))
+        val registry = TtsModelRegistry()
+        assertTrue("Should return true for system TTS ID", registry.isSystemTts(TtsModelRepositoryContract.SYSTEM_TTS_ID))
+        assertFalse("Should return false for invalid ID", registry.isSystemTts("invalid-id"))
     }
 
     @Test

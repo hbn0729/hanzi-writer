@@ -6,17 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelRegistry
 import com.hanzi.learner.speech.model.TtsModelUiItem
 import com.hanzi.learner.speech.model.TtsSettings
-import com.hanzi.learner.speech.internal.PREVIEW_TEXT
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 data class AdminTtsUiState(
@@ -35,6 +33,7 @@ class AdminTtsViewModel(
     private val downloadManager: TtsModelDownloadManagerContract,
     private val previewPlayer: PreviewAudioPlayerContract,
     private val ttsSpeaker: TtsSpeakerContract,
+    private val modelRepository: TtsModelRepositoryContract,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminTtsUiState())
@@ -56,7 +55,7 @@ class AdminTtsViewModel(
                     downloadManager.downloadStates,
                     preferenceRepository.getSelectedModelId(),
                 ) { downloadStates, selectedModelId ->
-                    TtsModelRegistry.getAvailableModels().map { model ->
+                    modelRepository.getAvailableModels().map { model ->
                         TtsModelUiItem(
                             info = model,
                             downloadState = downloadStates[model.id] ?: TtsModelDownloadState.NotDownloaded,
@@ -169,13 +168,13 @@ class AdminTtsViewModel(
             try {
                 previewPlayer.stop()
 
-                val model = TtsModelRegistry.getModelById(modelId) ?: return@launch
+                val model = modelRepository.getModelById(modelId) ?: return@launch
 
                 if (model.isSystemTts) {
                     _uiState.value = _uiState.value.copy(
                         currentlyPlayingModelId = modelId,
                     )
-                    previewPlayer.playSystemTtsPreview(PREVIEW_TEXT)
+                    previewPlayer.playSystemTtsPreview(TtsModelRepositoryContract.PREVIEW_TEXT)
                     return@launch
                 }
 
@@ -205,7 +204,7 @@ class AdminTtsViewModel(
                         previewPlayer.playFromLocalModel(
                             modelDirPath = downloadState.localPath,
                             modelFiles = model.modelFiles,
-                            text = PREVIEW_TEXT,
+                            text = TtsModelRepositoryContract.PREVIEW_TEXT,
                         )
                     }
                     is TtsModelDownloadState.Error -> {
@@ -259,6 +258,7 @@ class AdminTtsViewModel(
         private val downloadManager: TtsModelDownloadManagerContract,
         private val previewPlayer: PreviewAudioPlayerContract,
         private val ttsSpeaker: TtsSpeakerContract,
+        private val modelRepository: TtsModelRepositoryContract,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -268,6 +268,7 @@ class AdminTtsViewModel(
                     downloadManager = downloadManager,
                     previewPlayer = previewPlayer,
                     ttsSpeaker = ttsSpeaker,
+                    modelRepository = modelRepository,
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

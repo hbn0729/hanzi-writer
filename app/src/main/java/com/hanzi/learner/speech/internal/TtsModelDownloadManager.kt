@@ -1,6 +1,7 @@
 package com.hanzi.learner.speech.internal
 
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelRegistry
 import kotlinx.coroutines.CoroutineScope
@@ -25,14 +26,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Implementation of TTS model download manager.
- * Downloads model files using HttpURLConnection with support for progress tracking,
- * pause/resume, and cancellation.
- */
 class TtsModelDownloadManager(
     private val modelsBaseDir: File,
-    private val modelRegistry: TtsModelRegistry = TtsModelRegistry,
+    private val modelRepository: TtsModelRepositoryContract = TtsModelRegistry(),
 ) : TtsModelDownloadManagerContract {
 
     companion object {
@@ -50,9 +46,8 @@ class TtsModelDownloadManager(
     private val mutex = Mutex()
 
     init {
-        // Initialize states for all downloadable models
         val initialStates = mutableMapOf<String, TtsModelDownloadState>()
-        modelRegistry.getAvailableModels()
+        modelRepository.getAvailableModels()
             .filter { !it.isSystemTts }
             .forEach { model ->
                 initialStates[model.id] = if (isModelFilesExist(model.id)) {
@@ -65,7 +60,7 @@ class TtsModelDownloadManager(
     }
 
     override suspend fun startDownload(modelId: String): Boolean = mutex.withLock {
-        val model = modelRegistry.getModelById(modelId) ?: return false
+        val model = modelRepository.getModelById(modelId) ?: return false
         if (model.isSystemTts || model.downloadUrl == null) return false
 
         val currentState = _downloadStates.value[modelId]
@@ -75,16 +70,13 @@ class TtsModelDownloadManager(
             return false
         }
 
-        // Clean up any existing files for fresh download
         if (currentState !is TtsModelDownloadState.Paused) {
             deleteModelFiles(modelId)
         }
 
-        // Create pause signal
         val pauseSignal = MutableStateFlow(false)
         pauseSignals[modelId] = pauseSignal
 
-        // Update state to downloading
         updateState(modelId) {
             TtsModelDownloadState.Downloading(
                 progress = 0f,
@@ -104,7 +96,7 @@ class TtsModelDownloadManager(
     override suspend fun pauseDownload(modelId: String) {
         pauseSignals[modelId]?.value = true
 
-        val model = modelRegistry.getModelById(modelId) ?: return
+        val model = modelRepository.getModelById(modelId) ?: return
         updateState(modelId) { currentState ->
             if (currentState is TtsModelDownloadState.Downloading) {
                 TtsModelDownloadState.Paused(
@@ -119,15 +111,13 @@ class TtsModelDownloadManager(
     }
 
     override suspend fun resumeDownload(modelId: String) {
-        val model = modelRegistry.getModelById(modelId) ?: return
+        val model = modelRepository.getModelById(modelId) ?: return
         val currentState = _downloadStates.value[modelId]
 
         if (currentState !is TtsModelDownloadState.Paused) return
 
-        // Reset pause signal
         pauseSignals[modelId]?.value = false
 
-        // Update state back to downloading
         updateState(modelId) {
             TtsModelDownloadState.Downloading(
                 progress = currentState.progress,
@@ -138,15 +128,12 @@ class TtsModelDownloadManager(
     }
 
     override suspend fun cancelDownload(modelId: String) {
-        // Cancel active job
         activeDownloads[modelId]?.cancel()
         activeDownloads.remove(modelId)
 
-        // Delete downloaded files
         deleteModelFiles(modelId)
         pauseSignals.remove(modelId)
 
-        // Update state
         updateState(modelId) { TtsModelDownloadState.NotDownloaded }
     }
 
@@ -166,12 +153,8 @@ class TtsModelDownloadManager(
         scope.cancel()
     }
 
-    /**
-     * Internal method to perform the actual download.
-     * Should be called from a coroutine.
-     */
     suspend fun performDownload(modelId: String) {
-        val model = modelRegistry.getModelById(modelId) ?: return
+        val model = modelRepository.getModelById(modelId) ?: return
         val downloadUrlBase = model.downloadUrl ?: return
 
         withContext(Dispatchers.IO) {
@@ -229,7 +212,7 @@ class TtsModelDownloadManager(
     }
 
     private fun isModelFilesExist(modelId: String): Boolean {
-        val model = modelRegistry.getModelById(modelId) ?: return false
+        val model = modelRepository.getModelById(modelId) ?: return false
         val requiredFiles = model.modelFiles
         if (requiredFiles.isEmpty()) return false
 
@@ -353,7 +336,7 @@ class TtsModelDownloadManager(
     }
 
     private fun getModelTotalDownloadedBytes(modelId: String): Long {
-        val model = modelRegistry.getModelById(modelId) ?: return 0L
+        val model = modelRepository.getModelById(modelId) ?: return 0L
         val modelDir = getModelDirectory(modelId)
         return model.modelFiles.sumOf { fileName ->
             val f = File(modelDir, fileName)

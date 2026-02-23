@@ -21,7 +21,6 @@ import java.io.IOException
 import java.util.Locale
 
 private const val TAG = "PreviewAudioPlayer"
-const val PREVIEW_TEXT = "这是一条试听朗读"
 
 internal class PreviewAudioPlayer(
     private val context: Context,

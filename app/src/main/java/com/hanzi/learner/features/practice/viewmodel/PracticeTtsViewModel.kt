@@ -6,13 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelRegistry
 import com.hanzi.learner.speech.model.TtsModelUiItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -29,6 +28,7 @@ class PracticeTtsViewModel(
     private val preferenceRepository: TtsPreferenceRepositoryContract,
     private val downloadManager: TtsModelDownloadManagerContract,
     private val previewPlayer: PreviewAudioPlayerContract,
+    private val modelRepository: TtsModelRepositoryContract,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PracticeTtsUiState())
     val uiState: StateFlow<PracticeTtsUiState> = _uiState.asStateFlow()
@@ -41,7 +41,7 @@ class PracticeTtsViewModel(
     fun selectModel(modelId: String) {
         viewModelScope.launch {
             try {
-                val model = TtsModelRegistry.getModelById(modelId) ?: return@launch
+                val model = modelRepository.getModelById(modelId) ?: return@launch
                 if (!model.isSystemTts) {
                     val downloadState = downloadManager.downloadStates.value[modelId]
                     if (downloadState is TtsModelDownloadState.NotDownloaded ||
@@ -67,7 +67,7 @@ class PracticeTtsViewModel(
         viewModelScope.launch {
             try {
                 previewPlayer.stop()
-                val model = TtsModelRegistry.getModelById(modelId) ?: return@launch
+                val model = modelRepository.getModelById(modelId) ?: return@launch
                 _uiState.value = _uiState.value.copy(currentlyPlayingModelId = modelId, error = null)
                 if (model.isSystemTts) {
                     previewPlayer.playSystemTtsPreview("你好，这是系统语音预览")
@@ -98,7 +98,7 @@ class PracticeTtsViewModel(
                 preferenceRepository.getSelectedModelId(),
                 downloadManager.downloadStates,
             ) { selectedId, downloadStates ->
-                val models = TtsModelRegistry.getAvailableModels().map { model ->
+                val models = modelRepository.getAvailableModels().map { model ->
                     TtsModelUiItem(
                         info = model,
                         downloadState = downloadStates[model.id] ?: TtsModelDownloadState.NotDownloaded,
@@ -136,6 +136,7 @@ class PracticeTtsViewModel(
         private val preferenceRepository: TtsPreferenceRepositoryContract,
         private val downloadManager: TtsModelDownloadManagerContract,
         private val previewPlayer: PreviewAudioPlayerContract,
+        private val modelRepository: TtsModelRepositoryContract,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -144,6 +145,7 @@ class PracticeTtsViewModel(
                     preferenceRepository = preferenceRepository,
                     downloadManager = downloadManager,
                     previewPlayer = previewPlayer,
+                    modelRepository = modelRepository,
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

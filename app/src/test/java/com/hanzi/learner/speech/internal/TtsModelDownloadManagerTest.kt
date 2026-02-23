@@ -1,15 +1,14 @@
 package com.hanzi.learner.speech.internal
 
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
-import com.hanzi.learner.speech.model.TtsModelRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 
 class TtsModelDownloadManagerTest {
 
@@ -39,7 +38,7 @@ class TtsModelDownloadManagerTest {
     fun `startDownload should return false for system TTS`() = runTest {
         val mockManager = createMockDownloadManager()
 
-        val result = mockManager.startDownload(TtsModelRegistry.SYSTEM_TTS_ID)
+        val result = mockManager.startDownload(TtsModelRepositoryContract.SYSTEM_TTS_ID)
 
         assertFalse(result)
     }
@@ -114,7 +113,7 @@ class TtsModelDownloadManagerTest {
 
         val states = mockManager.downloadStates.first()
 
-        assertFalse(states.containsKey(TtsModelRegistry.SYSTEM_TTS_ID))
+        assertFalse(states.containsKey(TtsModelRepositoryContract.SYSTEM_TTS_ID))
     }
 
     @Test
@@ -149,7 +148,7 @@ class TtsModelDownloadManagerTest {
         )
 
         try {
-            assertFalse(manager.isModelDownloaded(TtsModelRegistry.SYSTEM_TTS_ID))
+            assertFalse(manager.isModelDownloaded(TtsModelRepositoryContract.SYSTEM_TTS_ID))
         } finally {
             manager.release()
         }
@@ -163,7 +162,7 @@ class TtsModelDownloadManagerTest {
             override val downloadStates: kotlinx.coroutines.flow.StateFlow<Map<String, TtsModelDownloadState>> = _downloadStates
 
             override suspend fun startDownload(modelId: String): Boolean {
-                if (modelId == TtsModelRegistry.SYSTEM_TTS_ID || modelId == "non-existent") {
+                if (modelId == TtsModelRepositoryContract.SYSTEM_TTS_ID || modelId == "non-existent") {
                     return false
                 }
                 _downloadStates.value = _downloadStates.value.toMutableMap().apply {

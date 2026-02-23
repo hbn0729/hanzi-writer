@@ -27,10 +27,12 @@ import com.hanzi.learner.features.practice.domain.PracticeSessionEngineFactory
 import com.hanzi.learner.character_writer.match.StrokeMatcherContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
 import com.hanzi.learner.speech.internal.PreferenceTtsSpeaker
 import com.hanzi.learner.speech.internal.PreviewAudioPlayer
 import com.hanzi.learner.speech.internal.TtsModelDownloadManager
+import com.hanzi.learner.speech.model.TtsModelRegistry
 import java.io.File
 
 class AppContainer(
@@ -62,10 +64,13 @@ class AppContainer(
         context = context.applicationContext,
     )
 
+    private val _modelRepository: TtsModelRepositoryContract = TtsModelRegistry()
+
     private val _ttsSpeaker: TtsSpeakerContract = PreferenceTtsSpeaker(
         context = context.applicationContext,
         preferenceRepository = _ttsPreferenceRepository,
         downloadManager = _ttsDownloadManager,
+        modelRepository = _modelRepository,
     )
 
     override val progressRepository: ProgressRepositoryContract = coreDataModule.progressRepository
@@ -81,6 +86,7 @@ class AppContainer(
     override val ttsDownloadManager: TtsModelDownloadManagerContract = _ttsDownloadManager
     override val previewAudioPlayer: PreviewAudioPlayerContract = _previewAudioPlayer
     override val ttsSpeaker: TtsSpeakerContract = _ttsSpeaker
+    override val modelRepository: TtsModelRepositoryContract = _modelRepository
 
     override val timeProvider: TimeProvider = coreDataModule.timeProvider
     override val adminIndexRepository: AdminIndexRepository = adminModule.adminIndexRepository

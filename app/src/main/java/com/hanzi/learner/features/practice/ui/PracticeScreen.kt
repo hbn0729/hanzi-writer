@@ -67,6 +67,7 @@ fun PracticeScreen(
         context = context,
         preferenceRepository = deps.ttsPreferenceRepository,
         downloadManager = deps.ttsDownloadManager,
+        modelRepository = deps.modelRepository,
     )
     val factory = remember(deps, reviewOnly) {
         PracticeViewModel.Factory(
@@ -84,6 +85,7 @@ fun PracticeScreen(
                 preferenceRepository = deps.ttsPreferenceRepository,
                 downloadManager = deps.ttsDownloadManager,
                 previewPlayer = deps.previewAudioPlayer,
+                modelRepository = deps.modelRepository,
             )
         },
     )

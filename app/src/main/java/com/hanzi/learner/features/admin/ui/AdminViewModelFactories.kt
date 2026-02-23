@@ -22,6 +22,7 @@ import com.hanzi.learner.features.admin.viewmodel.AdminTtsViewModel
 import com.hanzi.learner.app.AdminFeatureDependencies
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
 
 class AdminViewModelFactories(
@@ -40,6 +41,7 @@ class AdminViewModelFactories(
     private val ttsDownloadManager: TtsModelDownloadManagerContract,
     private val previewAudioPlayer: PreviewAudioPlayerContract,
     private val ttsSpeaker: TtsSpeakerContract,
+    private val modelRepository: TtsModelRepositoryContract,
 ) {
     fun dashboardFactory(): AdminDashboardViewModel.Factory = AdminDashboardViewModel.Factory(
         progressCommandRepository = progressCommandRepository,
@@ -85,6 +87,7 @@ class AdminViewModelFactories(
         downloadManager = ttsDownloadManager,
         previewPlayer = previewAudioPlayer,
         ttsSpeaker = ttsSpeaker,
+        modelRepository = modelRepository,
     )
 
     companion object {
@@ -104,6 +107,7 @@ class AdminViewModelFactories(
             ttsDownloadManager = deps.ttsDownloadManager,
             previewAudioPlayer = deps.previewAudioPlayer,
             ttsSpeaker = deps.ttsSpeaker,
+            modelRepository = deps.modelRepository,
         )
     }
 }

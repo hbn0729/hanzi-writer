@@ -1,5 +1,6 @@
 package com.hanzi.learner.features.admin.viewmodel
 
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.model.TtsModelDownloadState
 import com.hanzi.learner.speech.model.TtsModelInfo
 import com.hanzi.learner.speech.model.TtsModelRegistry
@@ -81,16 +82,16 @@ class AdminTtsViewModelTest {
 
     @Test
     fun `TtsModelRegistry should contain system TTS`() {
-        val models = TtsModelRegistry.getAvailableModels()
+        val registry = TtsModelRegistry()
+        val models = registry.getAvailableModels()
 
-        val systemTts = models.find { it.id == TtsModelRegistry.SYSTEM_TTS_ID }
+        val systemTts = models.find { it.id == TtsModelRepositoryContract.SYSTEM_TTS_ID }
         assertNotNull(systemTts)
         assertTrue(systemTts?.isSystemTts == true)
     }
 
     @Test
     fun `TtsModelDownloadState should have all required states`() {
-        // Verify all states can be instantiated
         val notDownloaded = TtsModelDownloadState.NotDownloaded
         val downloading = TtsModelDownloadState.Downloading(0.5f, 50, 100)
         val paused = TtsModelDownloadState.Paused(0.3f, 30, 100)
@@ -103,7 +104,6 @@ class AdminTtsViewModelTest {
         assertNotNull(downloaded)
         assertNotNull(error)
 
-        // Verify properties
         assertEquals(0.5f, downloading.progress, 0.01f)
         assertEquals(50L, downloading.bytesDownloaded)
         assertEquals(100L, downloading.totalBytes)
@@ -140,7 +140,7 @@ class AdminTtsViewModelTest {
 
     @Test
     fun `PREVIEW_TEXT constant is defined correctly`() {
-        assertEquals("这是一条试听朗读", com.hanzi.learner.speech.internal.PREVIEW_TEXT)
+        assertEquals("这是一条试听朗读", TtsModelRepositoryContract.PREVIEW_TEXT)
     }
 
     @Test

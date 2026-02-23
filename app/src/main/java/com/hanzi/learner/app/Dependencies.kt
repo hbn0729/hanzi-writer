@@ -26,6 +26,7 @@ import com.hanzi.learner.character_writer.match.StrokeMatcherContract
 import com.hanzi.learner.data.repository.TtsPreferenceRepositoryContract
 import com.hanzi.learner.speech.contract.PreviewAudioPlayerContract
 import com.hanzi.learner.speech.contract.TtsModelDownloadManagerContract
+import com.hanzi.learner.speech.contract.TtsModelRepositoryContract
 import com.hanzi.learner.speech.contract.TtsSpeakerContract
 
 interface HomeFeatureDependencies {
@@ -43,6 +44,7 @@ interface PracticeFeatureDependencies {
     val ttsDownloadManager: TtsModelDownloadManagerContract
     val previewAudioPlayer: PreviewAudioPlayerContract
     val ttsSpeaker: TtsSpeakerContract
+    val modelRepository: TtsModelRepositoryContract
 }
 
 interface AdminFeatureDependencies {
@@ -65,6 +67,7 @@ interface AdminFeatureDependencies {
     val ttsDownloadManager: TtsModelDownloadManagerContract
     val previewAudioPlayer: PreviewAudioPlayerContract
     val ttsSpeaker: TtsSpeakerContract
+    val modelRepository: TtsModelRepositoryContract
 }
 
 interface AppDependencies {
