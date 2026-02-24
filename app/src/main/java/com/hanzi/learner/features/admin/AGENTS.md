@@ -1,13 +1,14 @@
 # ADMIN FEATURE KNOWLEDGE
 
 ## OVERVIEW
-Administrative workflows: dashboard metrics, character/phrase management, backup import/export, settings.
+Administrative workflows: dashboard metrics, character/phrase management, backup import/export, settings. 5 tabs: 总览/字管理/学习数据/设置/备份.
 
 ## STRUCTURE
 ```text
 admin/
-├── ui/                 # tab routes + tab composables
-├── viewmodel/          # tab-specific state managers
+├── ui/                 # AdminScreen (tab host) + AdminTabRoutes + AdminViewModelFactories
+│   └── tabs/           # 5 tab composables (OverviewTab, CharacterManagementTab, LearningDataTab, SettingsTab, BackupTab)
+├── viewmodel/          # tab-specific state managers (Dashboard, Character, LearningData, Settings, Backup)
 ├── domain/             # loader/use-case orchestration
 ├── repository/         # admin adapters over shared contracts
 └── backup/             # parsing/writing/zip extraction helpers
@@ -21,6 +22,8 @@ admin/
 | Character management (字管理) | `ui/tabs/CharacterManagementTab.kt` | supports paging for large character lists (3000+ chars) |
 | Backup business flow | `viewmodel/AdminBackupViewModel.kt`, `repository/backup/*` | enforce port segregation |
 | Import/export parsing | `backup/StrokeDatasetParser.kt`, `StrokeDatasetWriter.kt` | data contract-sensitive |
+| ViewModel factories | `ui/AdminViewModelFactories.kt` | centralized factory creation from `AdminFeatureDependencies` |
+| Data change notification | `ui/AdminDataChangedNotifier.kt` | version-based reactive refresh across tabs |
 
 ## PERFORMANCE
 - Character list (`CharacterManagementTab`) uses manual paging (pageSize=200) to handle 3000+ characters without loading all into memory.

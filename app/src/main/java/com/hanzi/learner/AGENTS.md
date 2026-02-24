@@ -6,19 +6,20 @@ Primary runtime package; composes app wiring (`app/`), feature modules, persiste
 ## STRUCTURE
 ```text
 com/hanzi/learner/
-├── app/               # composition root + navigation
+├── app/               # composition root + DI modules + navigation + theme
 ├── features/          # home/practice/admin vertical slices
 ├── data/              # Room + repository contracts/impls
 ├── character_writer/  # stroke algorithm + rendering
-└── speech/            # local TTS abstractions + impls
+└── speech/            # system TTS only (simplified)
 ```
 
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |---|---|---|
-| Change dependency graph | `app/AppContainer.kt`, `app/AppModules.kt` | most coupled code in project |
+| Change dependency graph | `app/AppContainer.kt`, `app/AppModules.kt`, `app/Dependencies.kt` | modular composition root + feature dependency interfaces |
 | Enforce architecture constraints | `.../architecture/ArchitectureGuardrailsTest.kt` | enforceable policy, not optional |
 | Feature integration | `app/AppNavGraph.kt` + feature screen/viewmodel | keep navigation logic in app layer |
+| Theme/styling | `app/theme/Theme.kt`, `app/theme/Claymorphism.kt` | claymorphism + SeniorTheme (elderly-friendly) |
 
 ## CONVENTIONS
 - Respect SOLID boundaries: UI depends on abstractions, domain isolated from Compose.
