@@ -54,7 +54,7 @@ class AdminCharacterViewModel(
                 val indexItems = indexRepository.loadIndex()
                 val disabledChars = disabledCharRepository.getDisabledChars()
                 val allProgress = progressQueryRepository.getAllProgress()
-                val selectedChar = _uiState.value.selectedChar ?: indexItems.firstOrNull()?.char
+                val selectedChar = _uiState.value.selectedChar
 
                 _uiState.update {
                     it.copy(
