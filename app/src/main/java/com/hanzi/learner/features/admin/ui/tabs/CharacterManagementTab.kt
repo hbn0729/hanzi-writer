@@ -19,6 +19,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.hanzi.learner.features.admin.model.AdminProgress
 import com.hanzi.learner.features.admin.ui.epochDayToText
 import com.hanzi.learner.character_writer.data.CharIndexItem
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 private enum class CharFilterMode {
     ALL,
@@ -110,7 +115,7 @@ fun CharacterManagementTab(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text(text = "字管理")
+            Text(text = "字管理", style = MaterialTheme.typography.titleLarge)
         }
 
         item {
@@ -166,9 +171,9 @@ fun CharacterManagementTab(
         }
 
         item { Divider() }
-        item { Text(text = "字表（$totalCount）") }
+        item { Text(text = "字表（$totalCount 个字）", style = MaterialTheme.typography.titleMedium) }
         if (totalCount > displayCount) {
-            item { Text(text = "已显示 $displayCount / $totalCount") }
+            item { Text(text = "已显示 $displayCount / $totalCount", style = MaterialTheme.typography.bodySmall) }
         }
 
         items(visibleItems, key = { it.char }) { item ->
@@ -181,19 +186,26 @@ fun CharacterManagementTab(
                 add(if (p == null) "未学" else "已学")
                 if (isDue) add("到期")
             }.joinToString(" / ")
-            CharacterListItemRow(
-                item = item,
-                selectedChar = selectedChar,
-                selectedChars = selectedChars,
-                statusText = statusText,
-                enabled = enabled,
-                onSelectChar = onSelectChar,
-                onToggleChecked = { isChecked ->
-                    selectedChars = if (isChecked) selectedChars + ch else selectedChars - ch
-                },
-                onToggleEnabled = onToggleEnabled,
-            )
-            Divider()
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 1.dp
+            ) {
+                CharacterListItemRow(
+                    item = item,
+                    selectedChar = selectedChar,
+                    selectedChars = selectedChars,
+                    statusText = statusText,
+                    enabled = enabled,
+                    onSelectChar = onSelectChar,
+                    onToggleChecked = { isChecked ->
+                        selectedChars = if (isChecked) selectedChars + ch else selectedChars - ch
+                    },
+                    onToggleEnabled = onToggleEnabled,
+                )
+            }
+
         }
 
         if (totalCount > displayCount) {
@@ -229,14 +241,28 @@ private fun FilterModeRow(
         return if (mode == filterMode) "[$text]" else text
     }
     Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.ALL) }) { Text(text = label(CharFilterMode.ALL, "全部")) }
-        OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.DUE) }) { Text(text = label(CharFilterMode.DUE, "到期")) }
-        OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.LEARNED) }) { Text(text = label(CharFilterMode.LEARNED, "已学")) }
-        OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.UNLEARNED) }) { Text(text = label(CharFilterMode.UNLEARNED, "未学")) }
-        OutlinedButton(onClick = { onFilterModeChange(CharFilterMode.DISABLED) }) { Text(text = label(CharFilterMode.DISABLED, "禁用")) }
+        OutlinedButton(
+            onClick = { onFilterModeChange(CharFilterMode.ALL) }
+        ) { Text(text = label(CharFilterMode.ALL, "全部")) }
+        
+        OutlinedButton(
+            onClick = { onFilterModeChange(CharFilterMode.DUE) }
+        ) { Text(text = label(CharFilterMode.DUE, "到期")) }
+        
+        OutlinedButton(
+            onClick = { onFilterModeChange(CharFilterMode.LEARNED) }
+        ) { Text(text = label(CharFilterMode.LEARNED, "已学")) }
+        
+        OutlinedButton(
+            onClick = { onFilterModeChange(CharFilterMode.UNLEARNED) }
+        ) { Text(text = label(CharFilterMode.UNLEARNED, "未学")) }
+        
+        OutlinedButton(
+            onClick = { onFilterModeChange(CharFilterMode.DISABLED) }
+        ) { Text(text = label(CharFilterMode.DISABLED, "禁用")) }
     }
 }
 

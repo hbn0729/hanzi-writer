@@ -39,6 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hanzi.learner.app.theme.SeniorTheme
+import com.hanzi.learner.app.theme.claymorphism
+import com.hanzi.learner.app.theme.clayClickable
 import com.hanzi.learner.R
 import com.hanzi.learner.features.practice.viewmodel.FlashState
 import com.hanzi.learner.features.practice.viewmodel.PracticeAction
@@ -73,21 +76,23 @@ fun PracticeScreen(
     val viewModel: PracticeViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
 
-    PracticeFeedbackEffects(
-        uiState = uiState,
-        onAction = viewModel::onAction,
-        speaker = speaker,
-    )
+    SeniorTheme {
+        PracticeFeedbackEffects(
+            uiState = uiState,
+            onAction = viewModel::onAction,
+            speaker = speaker,
+        )
 
-    PracticeContent(
-        uiState = uiState,
-        paddingValues = paddingValues,
-        reviewOnly = reviewOnly,
-        onExit = onExit,
-        onAction = viewModel::onAction,
-        matcher = deps.strokeMatcher,
-        speaker = speaker,
-    )
+        PracticeContent(
+            uiState = uiState,
+            paddingValues = paddingValues,
+            reviewOnly = reviewOnly,
+            onExit = onExit,
+            onAction = viewModel::onAction,
+            matcher = deps.strokeMatcher,
+            speaker = speaker,
+        )
+    }
 }
 
 @Composable
@@ -209,13 +214,11 @@ private fun PracticeContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CharacterHeader(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
             hanzi = currentItem.char,
             phrase = uiState.currentPhrase,
             scaleValue = scale.value,
@@ -228,7 +231,7 @@ private fun PracticeContent(
         TraceCanvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1.25f),
+                .weight(1f), // Takes all remaining space to make tracing character as large as possible
             flashColor = flashColor,
             uiState = uiState,
             character = character,
@@ -249,50 +252,37 @@ private fun CharacterHeader(
     onSpeak: (String) -> Unit,
 ) {
     Box(
-        modifier = modifier,
+        modifier = modifier.claymorphism(
+            backgroundColor = MaterialTheme.colorScheme.surface,
+            cornerRadius = 16.dp,
+            elevation = 4.dp
+        ),
     ) {
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-
-                Text(
-                    text = hanzi,
-                    fontSize = 120.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    IconButton(
-                        onClick = {
-                            if (hanzi.isNotEmpty()) {
-                                onSpeak(hanzi)
-                            }
-                        },
-                        modifier = Modifier
-                            .padding(start = 24.dp)
-                            .size(108.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_volume),
-                            contentDescription = "Speak",
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+            IconButton(
+                onClick = {
+                    if (hanzi.isNotEmpty()) {
+                        onSpeak(hanzi)
                     }
-                }
+                },
+                modifier = Modifier.size(56.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_volume),
+                    contentDescription = "Speak",
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
             if (phrase.isNotEmpty()) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -302,9 +292,9 @@ private fun CharacterHeader(
                         val isTarget = char.toString() == hanzi
                         Text(
                             text = char.toString(),
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isTarget) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.graphicsLayer {
                                 if (isTarget) {
                                     scaleX = scaleValue
@@ -314,7 +304,16 @@ private fun CharacterHeader(
                         )
                     }
                 }
+            } else {
+                Text(
+                    text = hanzi,
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
+
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
@@ -329,7 +328,13 @@ private fun TraceCanvas(
     onStrokeEnd: (com.hanzi.learner.character_writer.match.StrokeMatchResult) -> Unit,
 ) {
     Box(
-        modifier = modifier.background(color = flashColor ?: Color.Transparent),
+        modifier = modifier
+            .claymorphism(
+                backgroundColor = flashColor ?: MaterialTheme.colorScheme.surface,
+                cornerRadius = 16.dp,
+                elevation = 6.dp
+            )
+            .padding(4.dp), // Minimal padding so canvas can be as large as possible
     ) {
         HanziTraceOverlay(
             character = character,
@@ -354,23 +359,30 @@ private fun TraceCanvas(
 @Composable
 private fun ExitButtonRow(onExit: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(modifier = Modifier.weight(1f))
 
-        IconButton(
-            onClick = onExit,
+        Box(
             modifier = Modifier
-                .size(72.dp)
-                .padding(start = 12.dp),
+                .padding(start = 12.dp)
+                .size(64.dp)
+                .claymorphism(
+                    backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                    borderColor = MaterialTheme.colorScheme.error,
+                    cornerRadius = 32.dp,
+                    elevation = 4.dp
+                )
+                .clayClickable(onClick = onExit),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_close),
                 contentDescription = "Exit",
-                modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(36.dp), // increased icon size for elderly
+                tint = MaterialTheme.colorScheme.onErrorContainer,
             )
         }
     }

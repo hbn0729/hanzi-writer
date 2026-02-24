@@ -21,6 +21,12 @@ import com.hanzi.learner.features.admin.model.AdminProgress
 import com.hanzi.learner.features.admin.model.AdminStudyCount
 import com.hanzi.learner.features.admin.ui.epochDayToText
 import com.hanzi.learner.character_writer.data.CharIndexItem
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import com.hanzi.learner.app.theme.claymorphism
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Box
 
 @Composable
 fun OverviewTab(
@@ -44,67 +50,120 @@ fun OverviewTab(
 
     LazyColumn(
         modifier = modifier.padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Text(text = "仪表盘")
+            Text(text = "仪表盘", style = MaterialTheme.typography.headlineMedium)
         }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "字库总字数：$totalChars（启用 $enabledCount / 禁用 $disabledCount）")
-                Text(text = "学习状态：已学 $learnedCount / 未学 $unlearnedCount")
-                Text(text = "今日到期复习：$dueCount")
-                Text(text = "短语覆盖条数：$phraseOverrideCount")
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = "字库总字数：$totalChars（启用 $enabledCount / 禁用 $disabledCount）", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "学习状态：已学 $learnedCount / 未学 $unlearnedCount", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "今日到期复习：$dueCount", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "短语覆盖条数：$phraseOverrideCount", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
 
-        item { Divider() }
+        item { Spacer(modifier = Modifier.height(8.dp)) }
 
         item {
-            Text(text = "到期复习列表（最多显示 50）")
+            Text(text = "到期复习（最多显示50个）", style = MaterialTheme.typography.titleMedium)
         }
         items(dueProgress.take(50), key = { "due_${it.char}" }) { p ->
-            Row(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 1.dp
             ) {
-                Text(text = p.char)
-                Spacer(modifier = Modifier.weight(1f))
-                OutlinedButton(onClick = { onMarkDueToday(listOf(p.char)) }) { Text(text = "今天复习") }
-                OutlinedButton(onClick = { onResetProgress(listOf(p.char)) }) { Text(text = "清零") }
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(text = p.char, style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Button(onClick = { onMarkDueToday(listOf(p.char)) }) { Text(text = "今天复习") }
+                        OutlinedButton(onClick = { onResetProgress(listOf(p.char)) }) { Text(text = "清零") }
+                    }
+                    Text(
+                        text = "下次复习=${epochDayToText(p.nextDueDay)}，间隔=${p.intervalDays}天\n正确=${p.correctCount}，错误笔画=${p.wrongCount}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Text(
-                text = "下次复习日=${epochDayToText(p.nextDueDay)} 间隔=${p.intervalDays}天 正确=${p.correctCount} 错误笔画=${p.wrongCount}",
-            )
-            Divider()
         }
 
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+
         item {
-            Text(text = "易错 Top（最多显示 20）")
+            Text(text = "易错字（最多显示20个）", style = MaterialTheme.typography.titleMedium)
         }
         items(topWrong.take(20), key = { "wrong_${it.char}" }) { p ->
-            Row(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+                shadowElevation = 0.dp
             ) {
-                Text(text = p.char)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(text = "错误笔画=${p.wrongCount} 正确=${p.correctCount}")
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text = p.char, style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "错误笔画=${p.wrongCount}\n正确=${p.correctCount}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
             }
-            Divider()
         }
 
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+
         item {
-            Text(text = "最近学习（最多显示 30 天）")
+            Text(text = "最近学习记录（30天内）", style = MaterialTheme.typography.titleMedium)
         }
         items(studyCounts, key = { it.day }) { row ->
-            Text(text = "${epochDayToText(row.day)}：${row.count}")
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 1.dp
+            ) {
+                Text(
+                    text = "${epochDayToText(row.day)}：${row.count}次练习",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
 
         item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onBack) { Text(text = "返回") }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth()
+            ) { 
+                Text(text = "返回上一页") 
+            }
         }
     }
 }
