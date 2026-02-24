@@ -3,6 +3,7 @@ package com.hanzi.learner.character_writer.data
 import com.hanzi.learner.character_writer.model.CharacterData
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlinx.collections.immutable.persistentListOf
 
 internal object CharacterJsonParser {
     fun parseIndex(json: String): List<CharIndexItem> {
@@ -15,9 +16,9 @@ internal object CharacterJsonParser {
                         char = obj.getString("char"),
                         codepoint = obj.getInt("codepoint"),
                         file = obj.getString("file"),
-                        pinyin = obj.optJSONArray("pinyin")?.toStringList().orEmpty(),
+                        pinyin = obj.optJSONArray("pinyin")?.toStringList() ?: persistentListOf(),
                         strokeCount = obj.optInt("strokeCount", 0),
-                        phrases = obj.optJSONArray("phrases")?.toStringList().orEmpty(),
+                        phrases = obj.optJSONArray("phrases")?.toStringList() ?: persistentListOf(),
                     )
                 )
             }

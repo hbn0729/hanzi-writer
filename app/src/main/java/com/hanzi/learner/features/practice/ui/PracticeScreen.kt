@@ -75,16 +75,20 @@ fun PracticeScreen(
     }
     val viewModel: PracticeViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
+    val flashState by viewModel.flashState.collectAsState()
 
     SeniorTheme {
         PracticeFeedbackEffects(
-            uiState = uiState,
+            flashState = flashState,
             onAction = viewModel::onAction,
             speaker = speaker,
+            currentChar = uiState.currentItem?.char,
+            currentPhrase = uiState.currentPhrase,
         )
 
         PracticeContent(
             uiState = uiState,
+            flashState = flashState,
             paddingValues = paddingValues,
             reviewOnly = reviewOnly,
             onExit = onExit,
@@ -97,9 +101,11 @@ fun PracticeScreen(
 
 @Composable
 private fun PracticeFeedbackEffects(
-    uiState: PracticeUiState,
+    flashState: FlashState,
     onAction: (PracticeAction) -> Unit,
     speaker: TtsSpeakerContract,
+    currentChar: String?,
+    currentPhrase: String,
 ) {
     val haptics = LocalHapticFeedback.current
 
@@ -107,17 +113,15 @@ private fun PracticeFeedbackEffects(
         onAction(PracticeAction.Start)
     }
 
-    LaunchedEffect(uiState.currentItem?.char) {
-        val char = uiState.currentItem?.char
-        val phrase = uiState.currentPhrase
-        if (!char.isNullOrEmpty()) {
-            speaker.speakCharacterAndPhrase(char, phrase)
+    LaunchedEffect(currentChar) {
+        if (!currentChar.isNullOrEmpty()) {
+            speaker.speakCharacterAndPhrase(currentChar, currentPhrase)
         }
     }
 
-    LaunchedEffect(uiState.flashColorState) {
-        if (uiState.flashColorState != FlashState.None) {
-            if (uiState.flashColorState == FlashState.Success) {
+    LaunchedEffect(flashState) {
+        if (flashState != FlashState.None) {
+            if (flashState == FlashState.Success) {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             } else {
                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -131,6 +135,7 @@ private fun PracticeFeedbackEffects(
 @Composable
 private fun PracticeContent(
     uiState: PracticeUiState,
+    flashState: FlashState,
     paddingValues: PaddingValues,
     reviewOnly: Boolean,
     onExit: () -> Unit,
@@ -138,7 +143,7 @@ private fun PracticeContent(
     matcher: com.hanzi.learner.character_writer.match.StrokeMatcherContract,
     speaker: TtsSpeakerContract,
 ) {
-    val flashColor = when (uiState.flashColorState) {
+    val flashColor = when (flashState) {
         FlashState.Success -> Color(0x992E7D32)
         FlashState.Failure -> Color(0x99C62828)
         FlashState.None -> null

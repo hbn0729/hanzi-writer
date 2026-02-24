@@ -35,11 +35,14 @@ class AppContainer(
         context = context,
         coreDataModule = coreDataModule,
     )
-    private val adminModule: AdminModuleApi = AdminModule(
-        context = context,
-        coreDataModule = coreDataModule,
-        characterRepositoryProvider = practiceModule.characterRepositoryProvider,
-    )
+    private val adminModule: AdminModuleApi by lazy {
+        AdminModule(
+            context = context,
+            coreDataModule = coreDataModule,
+            characterRepositoryProvider = practiceModule.characterRepositoryProvider,
+            cacheController = practiceModule.characterCacheController,
+        )
+    }
 
     override val progressRepository: ProgressRepositoryContract = coreDataModule.progressRepository
     override val appSettingsRepository: AppSettingsRepositoryContract = coreDataModule.appSettingsRepository
@@ -52,20 +55,20 @@ class AppContainer(
     override val strokeMatcher: StrokeMatcherContract = practiceModule.strokeMatcher
 
     override val timeProvider: TimeProvider = coreDataModule.timeProvider
-    override val adminIndexRepository: AdminIndexRepository = adminModule.adminIndexRepository
-    override val adminAppSettingsRepository: AdminAppSettingsRepository = adminModule.adminAppSettingsRepository
-    override val adminDisabledCharRepository: AdminDisabledCharRepository = adminModule.adminDisabledCharRepository
-    override val adminProgressQueryRepository: AdminProgressQueryRepository = adminModule.adminProgressQueryRepository
-    override val adminProgressCommandRepository: AdminProgressCommandRepository = adminModule.adminProgressCommandRepository
-    override val adminPhraseOverrideRepository: AdminPhraseOverrideRepository = adminModule.adminPhraseOverrideRepository
-    override val backupDataTransferPort: BackupDataTransferPort = adminModule.backupDataTransferPort
-    override val phraseImportPort: PhraseImportPort = adminModule.phraseImportPort
-    override val curriculumImportPort: CurriculumImportPort = adminModule.curriculumImportPort
-    override val strokeImportPort: StrokeImportPort = adminModule.strokeImportPort
-    override val adminIndexDataLoader: AdminIndexDataLoader = adminModule.adminIndexDataLoader
-    override val adminDashboardDataLoader: AdminDashboardDataLoader = adminModule.adminDashboardDataLoader
-    override val adminCharacterDataLoader: AdminCharacterDataLoader = adminModule.adminCharacterDataLoader
-    override val adminLearningDataLoader: AdminLearningDataLoader = adminModule.adminLearningDataLoader
+    override val adminIndexRepository: AdminIndexRepository get() = adminModule.adminIndexRepository
+    override val adminAppSettingsRepository: AdminAppSettingsRepository get() = adminModule.adminAppSettingsRepository
+    override val adminDisabledCharRepository: AdminDisabledCharRepository get() = adminModule.adminDisabledCharRepository
+    override val adminProgressQueryRepository: AdminProgressQueryRepository get() = adminModule.adminProgressQueryRepository
+    override val adminProgressCommandRepository: AdminProgressCommandRepository get() = adminModule.adminProgressCommandRepository
+    override val adminPhraseOverrideRepository: AdminPhraseOverrideRepository get() = adminModule.adminPhraseOverrideRepository
+    override val backupDataTransferPort: BackupDataTransferPort get() = adminModule.backupDataTransferPort
+    override val phraseImportPort: PhraseImportPort get() = adminModule.phraseImportPort
+    override val curriculumImportPort: CurriculumImportPort get() = adminModule.curriculumImportPort
+    override val strokeImportPort: StrokeImportPort get() = adminModule.strokeImportPort
+    override val adminIndexDataLoader: AdminIndexDataLoader get() = adminModule.adminIndexDataLoader
+    override val adminDashboardDataLoader: AdminDashboardDataLoader get() = adminModule.adminDashboardDataLoader
+    override val adminCharacterDataLoader: AdminCharacterDataLoader get() = adminModule.adminCharacterDataLoader
+    override val adminLearningDataLoader: AdminLearningDataLoader get() = adminModule.adminLearningDataLoader
 
     override val homeDeps: HomeFeatureDependencies = this
     override val practiceDeps: PracticeFeatureDependencies = this

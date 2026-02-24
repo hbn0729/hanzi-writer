@@ -1,28 +1,28 @@
 package com.hanzi.learner.app.theme
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
  * Claymorphism (Soft 3D, playful, toy-like)
- * - Soft shadows
- * - Thick borders (3-4px)
+ * - Shadow via Modifier.shadow (graphicsLayer, single node)
+ * - Background + border merged into single drawBehind pass (reduced overdraw)
  * - Rounded corners (16-24px)
- * - Press interaction animation
  */
 @Composable
 fun Modifier.claymorphism(
@@ -40,17 +40,30 @@ fun Modifier.claymorphism(
         ambientColor = shadowColor,
         spotColor = shadowColor
     )
-    .background(color = backgroundColor, shape = shape)
-    .border(width = borderWidth, color = borderColor, shape = shape)
+    .drawBehind {
+        val cr = CornerRadius(cornerRadius.toPx())
+        // Background fill
+        drawRoundRect(color = backgroundColor, cornerRadius = cr)
+        // Border stroke inset by half width to stay within bounds
+        val bw = borderWidth.toPx()
+        val halfBw = bw / 2f
+        drawRoundRect(
+            color = borderColor,
+            topLeft = Offset(halfBw, halfBw),
+            size = Size(size.width - bw, size.height - bw),
+            cornerRadius = cr,
+            style = Stroke(width = bw)
+        )
+    }
 
+@Composable
 fun Modifier.clayClickable(
     onClick: () -> Unit,
     interactionSource: MutableInteractionSource? = null,
-): Modifier = composed {
+): Modifier {
     val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
-    this.clickable(
+    return this.clickable(
         interactionSource = actualInteractionSource,
-
         indication = androidx.compose.material.ripple.rememberRipple(color = MaterialTheme.colorScheme.primary),
         onClick = onClick
     )

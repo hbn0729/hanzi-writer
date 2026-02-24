@@ -16,6 +16,7 @@ import com.hanzi.learner.features.home.domain.ResolveHomeCharacterRepositoryUseC
 import com.hanzi.learner.character_writer.data.CharIndexItem
 import com.hanzi.learner.character_writer.data.CharacterRepository
 import com.hanzi.learner.character_writer.model.CharacterData
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -27,9 +28,9 @@ class HomeViewModelTest {
         char = char,
         codepoint = char.codePointAt(0),
         file = "$char.json",
-        pinyin = emptyList(),
+        pinyin = persistentListOf(),
         strokeCount = 1,
-        phrases = emptyList(),
+        phrases = persistentListOf(),
     )
 
     private class FakeHanziProgressDao(

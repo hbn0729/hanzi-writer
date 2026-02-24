@@ -25,8 +25,8 @@ import com.hanzi.learner.data.local.entity.TtsPreferenceEntity
         AppSettingsEntity::class,
         TtsPreferenceEntity::class,
     ],
-    version = 4,
-    exportSchema = false,
+    version = 5,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun hanziProgressDao(): HanziProgressDao
@@ -69,13 +69,21 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_hanzi_progress_nextDueDay` ON `hanzi_progress`(`nextDueDay`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_hanzi_progress_lastStudiedDay` ON `hanzi_progress`(`lastStudiedDay`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_hanzi_progress_wrongCount` ON `hanzi_progress`(`wrongCount`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "hanzi_learner.db",
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { instance = it }
             }
         }
     }

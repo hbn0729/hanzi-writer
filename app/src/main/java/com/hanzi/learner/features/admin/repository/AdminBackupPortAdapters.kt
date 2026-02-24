@@ -16,6 +16,7 @@ import com.hanzi.learner.features.admin.repository.backup.CurriculumImportServic
 import com.hanzi.learner.features.admin.repository.backup.PhraseImportService
 import com.hanzi.learner.features.admin.repository.backup.StrokeDatasetImportService
 import com.hanzi.learner.character_writer.data.CharIndexItem
+import com.hanzi.learner.features.common.ports.CharacterCacheController
 import java.io.File
 
 class AdminBackupDataTransferPortAdapter(
@@ -76,6 +77,7 @@ class AdminStrokeImportPortAdapter(
     backupZipExtractor: BackupZipExtractor,
     strokeDatasetParser: StrokeDatasetParser,
     strokeDatasetWriter: StrokeDatasetWriter,
+    private val cacheController: CharacterCacheController,
 ) : StrokeImportPort {
     private val strokeDatasetImportService = StrokeDatasetImportService(
         contentResolver = contentResolver,
@@ -88,6 +90,10 @@ class AdminStrokeImportPortAdapter(
     )
 
     override suspend fun importStrokes(uri: Uri): StrokeImportResult {
-        return strokeDatasetImportService.import(uri)
+        val result = strokeDatasetImportService.import(uri)
+        if (result.switchedToExternalDataset) {
+            cacheController.invalidate()
+        }
+        return result
     }
 }

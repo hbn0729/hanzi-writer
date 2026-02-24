@@ -24,20 +24,16 @@ import androidx.compose.ui.unit.dp
 import com.hanzi.learner.character_writer.data.CharIndexItem
 import com.hanzi.learner.features.admin.model.AdminProgress
 import com.hanzi.learner.features.admin.ui.epochDayToText
-
-private enum class CharFilterMode(val label: String) {
-    ALL("全部"),
-    DUE("到期"),
-    LEARNED("已学"),
-    UNLEARNED("未学"),
-    DISABLED("禁用"),
-}
+import com.hanzi.learner.features.admin.viewmodel.CharFilterMode
+import com.hanzi.learner.features.admin.viewmodel.FilteredCharacterResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterManagementTab(
     modifier: Modifier = Modifier,
-    indexItems: List<CharIndexItem>,
+    searchText: String,
+    filterMode: CharFilterMode,
+    filteredResult: FilteredCharacterResult,
     disabledChars: Set<String>,
     allProgress: Map<String, AdminProgress>,
     todayEpochDay: Long,
@@ -45,6 +41,9 @@ fun CharacterManagementTab(
     progress: AdminProgress?,
     overridePhrases: List<String>,
     newPhrase: String,
+    onSearchTextChange: (String) -> Unit,
+    onFilterModeChange: (CharFilterMode) -> Unit,
+    onLoadMore: () -> Unit,
     onNewPhraseChange: (String) -> Unit,
     onSelectChar: (String?) -> Unit,
     onToggleEnabled: (char: String, enabled: Boolean) -> Unit,
@@ -57,47 +56,11 @@ fun CharacterManagementTab(
     onBulkEnable: (List<String>) -> Unit,
     onBack: () -> Unit,
 ) {
-    var searchText by remember { mutableStateOf("") }
-    var filterMode by remember { mutableStateOf(CharFilterMode.ALL) }
     var selectedChars by remember { mutableStateOf<Set<String>>(emptySet()) }
-    val pageSize = 20
-    var visibleCount by remember { mutableStateOf(pageSize) }
 
-    fun matchesFilter(item: CharIndexItem): Boolean {
-        val ch = item.char
-        val p = allProgress[ch]
-        val isDisabled = ch in disabledChars
-        val isLearned = p != null
-        val isDue = p != null && p.nextDueDay <= todayEpochDay
-        val searchOk = searchText.isBlank() ||
-            ch.contains(searchText) ||
-            item.pinyin.any { it.contains(searchText, ignoreCase = true) } ||
-            item.strokeCount.toString() == searchText
-
-        val filterOk = when (filterMode) {
-            CharFilterMode.ALL -> true
-            CharFilterMode.DUE -> isDue
-            CharFilterMode.LEARNED -> isLearned
-            CharFilterMode.UNLEARNED -> !isLearned
-            CharFilterMode.DISABLED -> isDisabled
-        }
-
-        return searchOk && filterOk
-    }
-
-    val totalCount = remember(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay) {
-        indexItems.count { matchesFilter(it) }
-    }
-
-    val displayCount = visibleCount.coerceAtMost(totalCount)
-
-    val visibleItems = remember(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay, displayCount) {
-        indexItems.asSequence().filter { matchesFilter(it) }.take(displayCount).toList()
-    }
-
-    LaunchedEffect(indexItems, disabledChars, allProgress, searchText, filterMode, todayEpochDay, totalCount) {
-        visibleCount = minOf(pageSize, totalCount)
-    }
+    val totalCount = filteredResult.totalCount
+    val visibleItems = filteredResult.visibleItems
+    val displayCount = visibleItems.size
 
     Column(modifier = modifier.fillMaxSize()) {
         // Sticky Header area
@@ -115,13 +78,13 @@ fun CharacterManagementTab(
                 // Search Bar
                 OutlinedTextField(
                     value = searchText,
-                    onValueChange = { searchText = it },
+                    onValueChange = onSearchTextChange,
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("搜索字、拼音或笔画数...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     trailingIcon = {
                         if (searchText.isNotEmpty()) {
-                            IconButton(onClick = { searchText = "" }) {
+                            IconButton(onClick = { onSearchTextChange("") }) {
                                 Icon(Icons.Default.Clear, contentDescription = "Clear")
                             }
                         }
@@ -142,7 +105,7 @@ fun CharacterManagementTab(
                     CharFilterMode.values().forEach { mode ->
                         FilterChip(
                             selected = filterMode == mode,
-                            onClick = { filterMode = mode },
+                            onClick = { onFilterModeChange(mode) },
                             label = { Text(mode.label) },
                             shape = RoundedCornerShape(8.dp)
                         )
@@ -230,12 +193,10 @@ fun CharacterManagementTab(
                         contentAlignment = Alignment.Center
                     ) {
                         OutlinedButton(
-                            onClick = {
-                                visibleCount = (visibleCount + pageSize).coerceAtMost(totalCount)
-                            },
+                            onClick = onLoadMore,
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(text = "加载更多 (+$pageSize)")
+                            Text(text = "加载更多 (+20)")
                         }
                     }
                 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,8 +52,8 @@ fun HanziTraceOverlay(
     onStrokeEnd: (StrokeMatchResult) -> Unit,
 ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
-    var userStrokeCanvasPoints by remember { mutableStateOf<List<Offset>>(emptyList()) }
-    var userStrokeHanziPoints by remember { mutableStateOf<List<Point>>(emptyList()) }
+    val userStrokeCanvasPoints = remember { mutableStateListOf<Offset>() }
+    val userStrokeHanziPoints = remember { mutableStateListOf<Point>() }
 
     val progress = remember(strokeIndex) { Animatable(0f) }
 
@@ -92,31 +93,33 @@ fun HanziTraceOverlay(
 
                     detectDragGestures(
                         onDragStart = { pos ->
-                            userStrokeCanvasPoints = listOf(pos)
-                            userStrokeHanziPoints = listOf(positioner.toHanzi(Point(pos.x, pos.y)))
+                            userStrokeCanvasPoints.clear()
+                            userStrokeCanvasPoints.add(pos)
+                            userStrokeHanziPoints.clear()
+                            userStrokeHanziPoints.add(positioner.toHanzi(Point(pos.x, pos.y)))
                         },
                         onDrag = { change, _ ->
                             val pos = change.position
-                            userStrokeCanvasPoints = userStrokeCanvasPoints + pos
-                            userStrokeHanziPoints = userStrokeHanziPoints + positioner.toHanzi(Point(pos.x, pos.y))
+                            userStrokeCanvasPoints.add(pos)
+                            userStrokeHanziPoints.add(positioner.toHanzi(Point(pos.x, pos.y)))
                             change.consume()
                         },
                         onDragEnd = {
-                            val res = matcher(userStrokeHanziPoints, character, strokeIndex)
+                            val res = matcher(userStrokeHanziPoints.toList(), character, strokeIndex)
                             onStrokeEnd(res)
-                            userStrokeCanvasPoints = emptyList()
-                            userStrokeHanziPoints = emptyList()
+                            userStrokeCanvasPoints.clear()
+                            userStrokeHanziPoints.clear()
                         },
                         onDragCancel = {
-                            userStrokeCanvasPoints = emptyList()
-                            userStrokeHanziPoints = emptyList()
+                            userStrokeCanvasPoints.clear()
+                            userStrokeHanziPoints.clear()
                         },
                     )
                 },
         ) {
             if (userStrokeCanvasPoints.size >= 2) {
                 val path = Path()
-                path.moveTo(userStrokeCanvasPoints.first().x, userStrokeCanvasPoints.first().y)
+                path.moveTo(userStrokeCanvasPoints[0].x, userStrokeCanvasPoints[0].y)
                 for (i in 1 until userStrokeCanvasPoints.size) {
                     val p = userStrokeCanvasPoints[i]
                     path.lineTo(p.x, p.y)

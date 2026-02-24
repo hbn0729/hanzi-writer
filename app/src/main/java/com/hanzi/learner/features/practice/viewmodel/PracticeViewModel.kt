@@ -99,7 +99,6 @@ data class PracticeUiState(
     val completedStrokeCount: Int = 0,
     val mistakesOnStroke: Int = 0,
     val hintAfterMisses: Int = 2,
-    val flashColorState: FlashState = FlashState.None,
     val windowItems: List<CharIndexItem> = emptyList(),
 )
 
@@ -121,6 +120,8 @@ class PracticeViewModel(
 
     private val _uiState = MutableStateFlow(PracticeUiState())
     val uiState: StateFlow<PracticeUiState> = _uiState.asStateFlow()
+    private val _flashState = MutableStateFlow(FlashState.None)
+    val flashState: StateFlow<FlashState> = _flashState.asStateFlow()
     private val strokeHandler = PracticeStrokeHandler()
     private val engineCoordinator = PracticeEngineCoordinator(
         reviewOnly = reviewOnly,
@@ -133,9 +134,7 @@ class PracticeViewModel(
             is PracticeAction.Start -> startSession()
             is PracticeAction.StrokeResult -> handleStroke(action.isMatch)
             is PracticeAction.ClearFlash -> {
-                _uiState.update {
-                    it.copy(flashColorState = FlashState.None)
-                }
+                _flashState.value = FlashState.None
             }
         }
     }
@@ -155,9 +154,9 @@ class PracticeViewModel(
             strokeHandler.onMiss(state)
         }
 
+        _flashState.value = update.flashState
         _uiState.update {
             it.copy(
-                flashColorState = update.flashState,
                 strokeIndex = update.strokeIndex,
                 completedStrokeCount = update.completedStrokeCount,
                 mistakesOnStroke = update.mistakesOnStroke,

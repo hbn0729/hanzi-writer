@@ -120,30 +120,33 @@ private fun outlineCurve(curve: List<Point>, numPoints: Int = 30): List<Point> {
 
     val curveLen = length(curve)
     val segmentLen = curveLen / (numPoints - 1)
-    val outline = ArrayList<Point>()
+    val outline = ArrayList<Point>(numPoints)
     outline.add(curve[0])
     val endPoint = curve.last()
-    val remaining = ArrayList<Point>(curve.drop(1))
+    // OPT-03: Use index cursor instead of removeAt(0) which is O(n)
+    var cursorIdx = 1
 
     for (i in 0 until numPoints - 2) {
         var lastPoint = outline.last()
         var remainingDist = segmentLen
         var found = false
-        while (!found) {
-            val nextPointDist = distance(lastPoint, remaining[0])
+        while (!found && cursorIdx < curve.size) {
+            val nextPointDist = distance(lastPoint, curve[cursorIdx])
             if (nextPointDist < remainingDist) {
                 remainingDist -= nextPointDist
-                lastPoint = remaining.removeAt(0)
+                lastPoint = curve[cursorIdx]
+                cursorIdx++
             } else {
                 val nextPoint = extendPointOnLine(
                     lastPoint,
-                    remaining[0],
+                    curve[cursorIdx],
                     remainingDist - nextPointDist,
                 )
                 outline.add(nextPoint)
                 found = true
             }
         }
+        if (!found) break
     }
     outline.add(endPoint)
     return outline

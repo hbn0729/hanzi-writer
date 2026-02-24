@@ -8,7 +8,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -17,7 +16,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.PathParser
 import com.hanzi.learner.character_writer.model.CharacterData
-import com.hanzi.learner.character_writer.model.Point
 
 @Composable
 fun HanziCanvas(
@@ -62,15 +60,20 @@ fun HanziCanvas(
         }
     }
 
+    // OPT-01: Pre-allocate reusable objects to eliminate per-frame allocations
+    val reusableMatrix = remember { Matrix() }
+    val reusableMedianPath = remember { Path() }
+    val reusablePathMeasure = remember { PathMeasure() }
+    val reusableOutputPath = remember { Path() }
+
     Canvas(modifier = modifier) {
-        val size = Size(width = size.width, height = size.height)
         val positioner = Positioner(
             width = size.width,
             height = size.height,
             padding = padding.toPx(),
         )
 
-        val matrix = Matrix().apply {
+        reusableMatrix.apply {
             setScale(positioner.scale, -positioner.scale)
             postTranslate(positioner.xOffset, positioner.height - positioner.yOffset)
         }
@@ -79,50 +82,61 @@ fun HanziCanvas(
 
         drawIntoCanvas { canvas ->
             val native = canvas.nativeCanvas
+
+            // Outlines: canvas.concat(matrix) instead of N per-path Path(raw)+transform
             if (showOutline) {
-                rawPaths.forEach { raw ->
-                    val transformed = Path(raw)
-                    transformed.transform(matrix)
-                    native.drawPath(transformed, outlinePaint)
+                native.save()
+                native.concat(reusableMatrix)
+                for (path in rawPaths) {
+                    native.drawPath(path, outlinePaint)
                 }
+                native.restore()
             }
 
+            // Completed strokes: same canvas transform approach
             val completedCount = completedStrokeCount.coerceIn(0, rawPaths.size)
-            for (i in 0 until completedCount) {
-                val transformed = Path(rawPaths[i])
-                transformed.transform(matrix)
-                native.drawPath(transformed, completedPaint)
+            if (completedCount > 0) {
+                native.save()
+                native.concat(reusableMatrix)
+                for (i in 0 until completedCount) {
+                    native.drawPath(rawPaths[i], completedPaint)
+                }
+                native.restore()
             }
 
+            // Animated stroke: reuse Path + PathMeasure objects
             val index = animatedStrokeIndex
             if (index != null && index in character.medians.indices) {
                 val median = character.medians[index]
-                val medianPath = buildPolylinePath(median, positioner)
-                val shown = extractPathSegment(medianPath, animatedStrokeProgress.coerceIn(0f, 1f))
-                native.drawPath(shown, strokePaint)
+                reusableMedianPath.reset()
+                if (median.isNotEmpty()) {
+                    // Inline toCanvas to avoid Point allocations
+                    val scale = positioner.scale
+                    val xOff = positioner.xOffset
+                    val yBase = positioner.height - positioner.yOffset
+                    val p0 = median[0]
+                    reusableMedianPath.moveTo(
+                        p0.x * scale + xOff,
+                        yBase - p0.y * scale,
+                    )
+                    for (j in 1 until median.size) {
+                        val p = median[j]
+                        reusableMedianPath.lineTo(
+                            p.x * scale + xOff,
+                            yBase - p.y * scale,
+                        )
+                    }
+                }
+
+                reusablePathMeasure.setPath(reusableMedianPath, false)
+                val length = reusablePathMeasure.length
+                if (length > 0f) {
+                    val stop = length * animatedStrokeProgress.coerceIn(0f, 1f)
+                    reusableOutputPath.reset()
+                    reusablePathMeasure.getSegment(0f, stop, reusableOutputPath, true)
+                    native.drawPath(reusableOutputPath, strokePaint)
+                }
             }
         }
     }
-}
-
-private fun buildPolylinePath(points: List<Point>, positioner: Positioner): Path {
-    val path = Path()
-    if (points.isEmpty()) return path
-    val start = positioner.toCanvas(points[0])
-    path.moveTo(start.x, start.y)
-    for (i in 1 until points.size) {
-        val p = positioner.toCanvas(points[i])
-        path.lineTo(p.x, p.y)
-    }
-    return path
-}
-
-private fun extractPathSegment(path: Path, progress: Float): Path {
-    val pm = PathMeasure(path, false)
-    val length = pm.length
-    val out = Path()
-    if (length <= 0f) return out
-    val stop = length * progress
-    pm.getSegment(0f, stop, out, true)
-    return out
 }

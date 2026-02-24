@@ -73,7 +73,7 @@ object DefaultStrokeMatcher : StrokeMatcherContract {
         options: StrokeMatchOptions,
         config: StrokeMatchConfig,
     ): StrokeMatchResult {
-        val strokes = character.medians.mapIndexed { index, pts -> Stroke(points = pts, strokeNum = index) }
+        val strokes = character.strokeObjects
         val points = stripDuplicates(userStrokePoints)
         if (points.size < 2) {
             return StrokeMatchResult(isMatch = false, meta = StrokeMatchMeta(false), avgDist = Double.POSITIVE_INFINITY)

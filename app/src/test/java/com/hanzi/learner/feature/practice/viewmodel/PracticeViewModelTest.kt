@@ -20,6 +20,8 @@ import com.hanzi.learner.character_writer.data.CharIndexItem
 import com.hanzi.learner.character_writer.data.CharacterRepository
 import com.hanzi.learner.character_writer.model.CharacterData
 import com.hanzi.learner.character_writer.model.Point
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -107,15 +109,15 @@ class PracticeViewModelTest {
             char = char,
             codepoint = char.codePointAt(0),
             file = "$char.json",
-            pinyin = listOf("test"),
+            pinyin = persistentListOf("test"),
             strokeCount = 3,
-            phrases = listOf("测试$char"),
+            phrases = persistentListOf("测试$char"),
         )
 
         private fun createTestCharacterData(char: String, strokeCount: Int = 3) = CharacterData(
             char = char,
-            strokes = List(strokeCount) { "M0,0L10,10" },
-            medians = List(strokeCount) { listOf(Point(0f, 0f), Point(10f, 10f)) },
+            strokes = List(strokeCount) { "M0,0L10,10" }.toImmutableList(),
+            medians = List(strokeCount) { persistentListOf(Point(0f, 0f), Point(10f, 10f)) }.toImmutableList(),
         )
     }
 
@@ -319,7 +321,7 @@ class PracticeViewModelTest {
 
         viewModel.uiState.test {
             val state = awaitItem()
-            assertEquals(FlashState.None, state.flashColorState)
+            assertEquals(FlashState.None, viewModel.flashState.value)
             assertEquals(1, state.strokeIndex)
             assertEquals(1, state.completedStrokeCount)
             assertEquals(1, state.mistakesOnStroke)

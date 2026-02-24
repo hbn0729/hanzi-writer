@@ -48,6 +48,7 @@ import com.hanzi.learner.features.admin.repository.CurriculumImportPort
 import com.hanzi.learner.features.admin.repository.PhraseImportPort
 import com.hanzi.learner.features.admin.repository.StrokeImportPort
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
+import com.hanzi.learner.features.common.ports.CharacterCacheController
 import com.hanzi.learner.features.practice.domain.CompletePracticeCharacterUseCase
 import com.hanzi.learner.features.practice.domain.PickNextPracticeItemUseCase
 import com.hanzi.learner.features.practice.domain.PhraseOverridePracticePhraseProvider
@@ -86,6 +87,7 @@ internal interface PracticeModuleApi {
     val practiceSessionEngineFactory: PracticeSessionEngineFactory
     val completePracticeCharacterUseCase: CompletePracticeCharacterUseCase
     val strokeMatcher: StrokeMatcherContract
+    val characterCacheController: CharacterCacheController
 }
 
 internal interface AdminModuleApi {
@@ -141,10 +143,12 @@ internal class PracticeModule(
     coreDataModule: PracticeModuleDependencies,
 ) : PracticeModuleApi {
     private val characterRepositoryFactory: CharacterRepositoryFactory = DefaultCharacterRepositoryFactory
-    override val characterRepositoryProvider: CharacterRepositoryProvider = DefaultCharacterRepositoryProvider(
+    private val defaultCharacterRepositoryProvider = DefaultCharacterRepositoryProvider(
         context = context.applicationContext,
         factory = characterRepositoryFactory,
     )
+    override val characterRepositoryProvider: CharacterRepositoryProvider = defaultCharacterRepositoryProvider
+    override val characterCacheController: CharacterCacheController = defaultCharacterRepositoryProvider
     private val itemSelector = PickNextPracticeItemUseCase(coreDataModule.progressRepository)
     private val phraseProvider = PhraseOverridePracticePhraseProvider(coreDataModule.phraseOverrideRepository)
 
@@ -164,6 +168,7 @@ internal class AdminModule(
     context: Context,
     coreDataModule: AdminModuleDependencies,
     characterRepositoryProvider: CharacterRepositoryProvider,
+    private val cacheController: CharacterCacheController,
 ) : AdminModuleApi {
     private val appContext = context.applicationContext
     private val database = coreDataModule.database
@@ -202,6 +207,7 @@ internal class AdminModule(
         backupZipExtractor = backupZipExtractor,
         strokeDatasetParser = strokeDatasetParser,
         strokeDatasetWriter = strokeDatasetWriter,
+        cacheController = cacheController,
     )
 
     override val adminIndexDataLoader: AdminIndexDataLoader = AdminIndexDataLoaderImpl(

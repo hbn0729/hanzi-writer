@@ -1,6 +1,7 @@
 package com.hanzi.learner.features.practice.domain
 
 import com.hanzi.learner.character_writer.data.CharIndexItem
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -12,9 +13,9 @@ class PracticeSessionManagerTest {
             char = char,
             codepoint = char[0].code,
             file = "",
-            pinyin = emptyList(),
+            pinyin = persistentListOf(),
             strokeCount = 0,
-            phrases = emptyList(),
+            phrases = persistentListOf(),
         )
     }
 

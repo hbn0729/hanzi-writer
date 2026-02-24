@@ -2,6 +2,7 @@ package com.hanzi.learner.features.practice.domain
 
 import com.hanzi.learner.data.repository.ProgressRepositoryContract
 import com.hanzi.learner.character_writer.data.CharIndexItem
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -23,9 +24,9 @@ class PickNextPracticeItemUseCaseTest {
         char = char,
         codepoint = char.codePointAt(0),
         file = "$char.json",
-        pinyin = emptyList(),
+        pinyin = persistentListOf(),
         strokeCount = 1,
-        phrases = emptyList(),
+        phrases = persistentListOf(),
     )
 
     @Test

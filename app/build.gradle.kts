@@ -23,7 +23,12 @@ android {
             isShrinkResources = false
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -59,6 +64,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2023.06.01")
     implementation(composeBom)
@@ -87,6 +96,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.5.2")
     ksp("androidx.room:room-compiler:2.5.2")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5")
 //    implementation(files("libs/sherpa-onnx-1.12.25.aar"))
 }
 

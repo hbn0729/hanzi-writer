@@ -66,6 +66,9 @@ fun CharacterManagementTabRoute(
     val factory = remember(factories) { factories.characterFactory() }
     val viewModel: AdminCharacterViewModel = viewModel(factory = factory, key = "admin_character")
     val state by viewModel.uiState.collectAsState()
+    val searchText by viewModel.searchText.collectAsState()
+    val filterMode by viewModel.filterMode.collectAsState()
+    val filteredResult by viewModel.filteredResult.collectAsState()
     val refreshVersion by notifier.version.collectAsState()
 
     LaunchedEffect(refreshVersion) {
@@ -74,7 +77,9 @@ fun CharacterManagementTabRoute(
 
     CharacterManagementTab(
         modifier = modifier,
-        indexItems = state.indexItems,
+        searchText = searchText,
+        filterMode = filterMode,
+        filteredResult = filteredResult,
         disabledChars = state.disabledChars,
         allProgress = state.allProgress,
         todayEpochDay = state.todayEpochDay,
@@ -82,6 +87,9 @@ fun CharacterManagementTabRoute(
         progress = state.progress,
         overridePhrases = state.overridePhrases,
         newPhrase = state.newPhrase,
+        onSearchTextChange = { viewModel.updateSearchText(it) },
+        onFilterModeChange = { viewModel.updateFilterMode(it) },
+        onLoadMore = { viewModel.loadMore() },
         onNewPhraseChange = { viewModel.newPhraseChange(it) },
         onSelectChar = { viewModel.selectCharacter(it) },
         onToggleEnabled = { c, e -> viewModel.toggleCharacterEnabled(c, e) },

@@ -12,11 +12,31 @@ import com.hanzi.learner.features.admin.repository.AdminPhraseOverrideRepository
 import com.hanzi.learner.features.admin.repository.AdminProgressCommandRepository
 import com.hanzi.learner.features.admin.repository.AdminProgressQueryRepository
 import com.hanzi.learner.character_writer.data.CharIndexItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+enum class CharFilterMode(val label: String) {
+    ALL("全部"),
+    DUE("到期"),
+    LEARNED("已学"),
+    UNLEARNED("未学"),
+    DISABLED("禁用"),
+}
+
+data class FilteredCharacterResult(
+    val totalCount: Int = 0,
+    val visibleItems: List<CharIndexItem> = emptyList(),
+)
 
 data class AdminCharacterUiState(
     val isLoading: Boolean = false,
@@ -32,6 +52,7 @@ data class AdminCharacterUiState(
     val todayEpochDay: Long = 0L,
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AdminCharacterViewModel(
     private val indexRepository: AdminIndexRepository,
     private val progressQueryRepository: AdminProgressQueryRepository,
@@ -43,8 +64,56 @@ class AdminCharacterViewModel(
     private val _uiState = MutableStateFlow(AdminCharacterUiState())
     val uiState: StateFlow<AdminCharacterUiState> = _uiState.asStateFlow()
 
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> = _searchText.asStateFlow()
+
+    private val _filterMode = MutableStateFlow(CharFilterMode.ALL)
+    val filterMode: StateFlow<CharFilterMode> = _filterMode.asStateFlow()
+
+    private val _displayCount = MutableStateFlow(PAGE_SIZE)
+
+    private data class FilterParams(
+        val searchText: String,
+        val filterMode: CharFilterMode,
+        val displayCount: Int,
+        val state: AdminCharacterUiState,
+    )
+
+    val filteredResult: StateFlow<FilteredCharacterResult> = combine(
+        _searchText, _filterMode, _displayCount, _uiState
+    ) { search, filter, count, state ->
+        FilterParams(search, filter, count, state)
+    }.mapLatest { params ->
+        withContext(Dispatchers.Default) {
+            val visible = ArrayList<CharIndexItem>(minOf(params.displayCount, 200))
+            var total = 0
+            for (item in params.state.indexItems) {
+                if (!matchesFilter(item, params.searchText, params.filterMode, params.state)) continue
+                total++
+                if (visible.size < params.displayCount) {
+                    visible.add(item)
+                }
+            }
+            FilteredCharacterResult(totalCount = total, visibleItems = visible)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), FilteredCharacterResult())
+
     init {
         refresh()
+    }
+
+    fun updateSearchText(text: String) {
+        _searchText.value = text
+        _displayCount.value = PAGE_SIZE
+    }
+
+    fun updateFilterMode(mode: CharFilterMode) {
+        _filterMode.value = mode
+        _displayCount.value = PAGE_SIZE
+    }
+
+    fun loadMore() {
+        _displayCount.value += PAGE_SIZE
     }
 
     fun refresh() {
@@ -185,6 +254,37 @@ class AdminCharacterViewModel(
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+
+    companion object {
+        private const val PAGE_SIZE = 20
+
+        private fun matchesFilter(
+            item: CharIndexItem,
+            searchText: String,
+            filterMode: CharFilterMode,
+            state: AdminCharacterUiState,
+        ): Boolean {
+            val ch = item.char
+            val p = state.allProgress[ch]
+            val isDisabled = ch in state.disabledChars
+            val isLearned = p != null
+            val isDue = p != null && p.nextDueDay <= state.todayEpochDay
+            val searchOk = searchText.isBlank() ||
+                ch.contains(searchText) ||
+                item.pinyin.any { it.contains(searchText, ignoreCase = true) } ||
+                item.strokeCount.toString() == searchText
+
+            val filterOk = when (filterMode) {
+                CharFilterMode.ALL -> true
+                CharFilterMode.DUE -> isDue
+                CharFilterMode.LEARNED -> isLearned
+                CharFilterMode.UNLEARNED -> !isLearned
+                CharFilterMode.DISABLED -> isDisabled
+            }
+
+            return searchOk && filterOk
         }
     }
 }

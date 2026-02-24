@@ -10,6 +10,8 @@ import com.hanzi.learner.character_writer.data.CharacterRepository
 import com.hanzi.learner.character_writer.model.CharacterData
 import com.hanzi.learner.character_writer.model.Point
 import com.hanzi.learner.features.common.ports.CharacterRepositoryProvider
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -24,17 +26,17 @@ class PracticeSessionOrchestratorTest {
             char = char,
             codepoint = char.codePointAt(0),
             file = "$char.json",
-            pinyin = listOf("test"),
+            pinyin = persistentListOf("test"),
             strokeCount = 3,
-            phrases = listOf("测试$char"),
+            phrases = persistentListOf("测试$char"),
         )
     }
 
     private fun characterData(char: String, strokeCount: Int = 3): CharacterData {
         return CharacterData(
             char = char,
-            strokes = List(strokeCount) { "M0,0L10,10" },
-            medians = List(strokeCount) { listOf(Point(0f, 0f), Point(10f, 10f)) },
+            strokes = List(strokeCount) { "M0,0L10,10" }.toImmutableList(),
+            medians = List(strokeCount) { persistentListOf(Point(0f, 0f), Point(10f, 10f)) }.toImmutableList(),
         )
     }
 
