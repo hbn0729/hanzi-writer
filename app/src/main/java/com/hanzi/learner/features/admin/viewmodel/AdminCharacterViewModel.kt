@@ -74,8 +74,19 @@ class AdminCharacterViewModel(
         }
     }
 
-    fun selectCharacter(char: String) {
+    fun selectCharacter(char: String?) {
         viewModelScope.launch {
+            if (char == null) {
+                _uiState.update {
+                    it.copy(
+                        selectedChar = null,
+                        selectedItem = null,
+                        progress = null,
+                        overridePhrases = emptyList(),
+                    )
+                }
+                return@launch
+            }
             val item = _uiState.value.indexItems.firstOrNull { it.char == char }
             val progress = progressQueryRepository.getProgress(char)
             val po = phraseOverrideRepository.getPhraseOverride(char)

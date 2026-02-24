@@ -78,7 +78,6 @@ fun CharacterManagementTabRoute(
         disabledChars = state.disabledChars,
         allProgress = state.allProgress,
         todayEpochDay = state.todayEpochDay,
-        selectedChar = state.selectedChar,
         selectedItem = state.selectedItem,
         progress = state.progress,
         overridePhrases = state.overridePhrases,
