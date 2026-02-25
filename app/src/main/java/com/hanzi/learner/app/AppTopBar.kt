@@ -28,7 +28,7 @@ internal fun AppTopBar(
     if (currentRoute == AppRoutes.PRACTICE || currentRoute == AppRoutes.REVIEW) return
 
     TopAppBar(
-        title = { Text(text = "Hanzi Learner") },
+        title = { Text(text = androidx.compose.ui.res.stringResource(id = R.string.app_name)) },
         navigationIcon = {
             if (canNavigateBack && currentRoute != AppRoutes.HOME) {
                 IconButton(onClick = onBack) {
