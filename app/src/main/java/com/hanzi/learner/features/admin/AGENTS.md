@@ -26,6 +26,10 @@ admin/
 | Data change notification | `ui/AdminDataChangedNotifier.kt` | version-based reactive refresh across tabs |
 
 ## PERFORMANCE
+- Character list uses manual paging via `displayCount` state (initial 20, max 200 visible) to handle 3000+ chars without loading all into memory.
+- **PWR-02 (Serial I/O)**: Bulk operations (`bulkDisable`/`bulkEnable`) use `Dispatchers.IO.limitedParallelism(1)` to prevent DB contention.
+- **PWR-03 (Smart Debouncing)**: Search text is debounced (150ms) while "Load more"/refresh remain immediate. Use `isOperating` flow to show bulk operation state.
+- `refreshInternal()` and `selectCharacterInternal()` extracted as suspend functions for consistent coroutine handling.
 - Character list (`CharacterManagementTab`) uses manual paging (pageSize=200) to handle 3000+ characters without loading all into memory.
 - Filtering happens in-memory but only visible items are rendered via `visibleItems` and `totalCount`.
 - "Load more" button appears when totalCount > displayCount; resets on filter/search changes.

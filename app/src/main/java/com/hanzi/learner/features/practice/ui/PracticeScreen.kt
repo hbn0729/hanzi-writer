@@ -222,15 +222,16 @@ private fun PracticeContent(
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        CharacterHeader(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        PracticeTopBar(
+            modifier = Modifier.fillMaxWidth(),
             hanzi = currentItem.char,
             phrase = uiState.currentPhrase,
-            scaleValue = scale.value,
+            scaleValueProvider = { scale.value },
             onSpeak = { hanzi ->
                 speaker.speakCharacterAndPhrase(hanzi, uiState.currentPhrase)
                 triggerAnimation()
             },
+            onExit = onExit
         )
 
         TraceCanvas(
@@ -243,83 +244,6 @@ private fun PracticeContent(
             matcher = matcher,
             onStrokeEnd = { res -> onAction(PracticeAction.StrokeResult(res.isMatch)) },
         )
-
-        ExitButtonRow(onExit = onExit)
-    }
-}
-
-@Composable
-private fun CharacterHeader(
-    modifier: Modifier,
-    hanzi: String,
-    phrase: String,
-    scaleValue: Float,
-    onSpeak: (String) -> Unit,
-) {
-    Box(
-        modifier = modifier.claymorphism(
-            backgroundColor = MaterialTheme.colorScheme.surface,
-            cornerRadius = 16.dp,
-            elevation = 4.dp
-        ),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start,
-        ) {
-            IconButton(
-                onClick = {
-                    if (hanzi.isNotEmpty()) {
-                        onSpeak(hanzi)
-                    }
-                },
-                modifier = Modifier.size(56.dp),
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_volume),
-                    contentDescription = "Speak",
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            if (phrase.isNotEmpty()) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    phrase.forEach { char ->
-                        val isTarget = char.toString() == hanzi
-                        Text(
-                            text = char.toString(),
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isTarget) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.graphicsLayer {
-                                if (isTarget) {
-                                    scaleX = scaleValue
-                                    scaleY = scaleValue
-                                }
-                            },
-                        )
-                    }
-                }
-            } else {
-                Text(
-                    text = hanzi,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-        }
     }
 }
 
@@ -362,33 +286,102 @@ private fun TraceCanvas(
 }
 
 @Composable
-private fun ExitButtonRow(onExit: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+private fun PracticeTopBar(
+    modifier: Modifier = Modifier,
+    hanzi: String,
+    phrase: String,
+    scaleValueProvider: () -> Float,
+    onSpeak: (String) -> Unit,
+    onExit: () -> Unit
+) {
+    Box(
+        modifier = modifier.claymorphism(
+            backgroundColor = MaterialTheme.colorScheme.surface,
+            cornerRadius = 24.dp,
+            elevation = 4.dp
+        ),
     ) {
-        Spacer(modifier = Modifier.weight(1f))
-
-        Box(
+        Row(
             modifier = Modifier
-                .padding(start = 12.dp)
-                .size(64.dp)
-                .claymorphism(
-                    backgroundColor = MaterialTheme.colorScheme.errorContainer,
-                    borderColor = MaterialTheme.colorScheme.error,
-                    cornerRadius = 32.dp,
-                    elevation = 4.dp
-                )
-                .clayClickable(onClick = onExit),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_close),
-                contentDescription = "Exit",
-                modifier = Modifier.size(36.dp), // increased icon size for elderly
-                tint = MaterialTheme.colorScheme.onErrorContainer,
-            )
+            // Left: TTS Button
+            IconButton(
+                onClick = {
+                    if (hanzi.isNotEmpty()) {
+                        onSpeak(hanzi)
+                    }
+                },
+                modifier = Modifier.size(64.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_volume),
+                    contentDescription = "Speak",
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            // Center: Phrase/Character
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                if (phrase.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        phrase.forEach { char ->
+                            val isTarget = char.toString() == hanzi
+                            Text(
+                                text = char.toString(),
+                                fontSize = 50.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isTarget) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.graphicsLayer {
+                                    val currentScale = scaleValueProvider()
+                                    if (isTarget) {
+                                        scaleX = currentScale
+                                        scaleY = currentScale
+                                    }
+                                },
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = hanzi,
+                        fontSize = 50.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
+            // Right: Exit Button
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .claymorphism(
+                        backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                        borderColor = MaterialTheme.colorScheme.error,
+                        cornerRadius = 32.dp,
+                        elevation = 4.dp
+                    )
+                    .clayClickable(onClick = onExit),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_close),
+                    contentDescription = "Exit",
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
         }
     }
 }

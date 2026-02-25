@@ -1,6 +1,8 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-24T19:18:00+08:00
+**Generated:** 2026-02-25T15:15:00+08:00
+**Commit:** e3e2eb6
+**Branch:** main
 **Commit:** 9baef9d
 **Branch:** main
 
@@ -84,10 +86,24 @@ Android Hanzi learning app (Kotlin + Compose + Room + manual DI). Core domain is
 - Do not add TTS model download/selection features — removed intentionally; system TTS only.
 
 ## PERFORMANCE
+- **Baseline Profile**: `app/src/main/baseline-prof.txt` pre-compiles startup/practice hot paths via AOT at install time.
+- **Async DI Initialization**: `HanziLearnerApplication` builds `AppContainer` on `Dispatchers.IO` to prevent main-thread blocking.
+- **Serial I/O (PWR-02)**: Bulk operations use `Dispatchers.IO.limitedParallelism(1)` to prevent DB contention in `AdminCharacterViewModel`.
+- **Smart Debouncing (PWR-03)**: Search inputs debounced 150ms; "Load More" actions remain immediate.
+- **Manual Paging**: Admin character list (3000+ items) uses `displayCount` state for lazy loading (20-200 items at a time).
+- **LRU Caching**: `AssetCharacterRepository` caches 40 most-recent character stroke data to avoid repeated file I/O.
+- Large lists (e.g., character management with 3000+ chars) use manual paging to avoid memory pressure.
+- See `features/admin/AGENTS.md` for character list paging details.
 - Large lists (e.g., character management with 3000+ chars) use manual paging to avoid memory pressure.
 - See `features/admin/AGENTS.md` for character list paging details.
 
 ## UNIQUE STYLES
+- Manual DI with modular composition: `CoreDataModule`, `PracticeModule`, `AdminModule` behind API interfaces, assembled in `AppContainer`.
+- Architecture is guarded with unit tests, not documentation-only guidance.
+- Feature-first packaging with explicit `domain`, `ui`, `viewmodel` subpackages.
+- Claymorphism design system: soft shadows, thick borders (3px), rounded corners (16-24dp), clay color palette.
+- Dual theme: `HanziLearnerTheme` (default) + `SeniorTheme` (practice screen, large fonts for elderly).
+- **Performance Patterns**: PWR-02 (serial I/O), PWR-03 (debouncing), PWR-07/08 (async init) — tag perf-sensitive code.
 - Manual DI with modular composition: `CoreDataModule`, `PracticeModule`, `AdminModule` behind API interfaces, assembled in `AppContainer`.
 - Architecture is guarded with unit tests, not documentation-only guidance.
 - Feature-first packaging with explicit `domain`, `ui`, `viewmodel` subpackages.
