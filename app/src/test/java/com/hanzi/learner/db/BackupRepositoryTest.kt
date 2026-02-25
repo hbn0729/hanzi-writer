@@ -71,6 +71,7 @@ class BackupRepositoryTest {
             phraseOverrideDao = phraseOverrideDao,
             disabledCharDao = disabledCharDao,
             appSettingsDao = appSettingsDao,
+            transactionRunner = { block -> block() },
         )
 
         val data = repo.read(ExportOptions())
@@ -133,6 +134,7 @@ class BackupRepositoryTest {
             phraseOverrideDao = phraseOverrideDao,
             disabledCharDao = disabledCharDao,
             appSettingsDao = appSettingsDao,
+            transactionRunner = { block -> block() },
         )
 
         val data = repo.read(ExportOptions(
@@ -206,6 +208,7 @@ class BackupRepositoryTest {
             phraseOverrideDao = phraseOverrideDao,
             disabledCharDao = disabledCharDao,
             appSettingsDao = appSettingsDao,
+            transactionRunner = { block -> block() },
         )
 
         val backupData = BackupData(
@@ -283,6 +286,7 @@ class BackupRepositoryTest {
             phraseOverrideDao = phraseOverrideDao,
             disabledCharDao = disabledCharDao,
             appSettingsDao = appSettingsDao,
+            transactionRunner = { block -> block() },
         )
 
         val backupData = BackupData(

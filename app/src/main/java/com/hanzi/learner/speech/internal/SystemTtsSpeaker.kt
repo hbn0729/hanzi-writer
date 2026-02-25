@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -179,6 +180,7 @@ internal class SystemTtsSpeaker(
 
     override fun shutdown() {
         Log.d(TAG, "Shutting down System TTS")
+        scope.cancel() // PWR-07: Cancel any in-flight coroutines
         tts?.stop()
         tts?.shutdown()
         tts = null

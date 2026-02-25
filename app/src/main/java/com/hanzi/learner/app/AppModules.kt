@@ -126,6 +126,7 @@ internal class CoreDataModule(
     override val phraseOverrideRepository: PhraseOverrideRepositoryContract = PhraseOverrideRepository(database.phraseOverrideDao())
 
     private val backupRepository: BackupRepositoryContract = BackupRepository(
+        database = database,
         progressDao = database.hanziProgressDao(),
         phraseOverrideDao = database.phraseOverrideDao(),
         disabledCharDao = database.disabledCharDao(),

@@ -1,5 +1,7 @@
 package com.hanzi.learner.data.repository
 
+import androidx.room.withTransaction
+import com.hanzi.learner.data.local.AppDatabase
 import com.hanzi.learner.data.local.dao.AppSettingsDao
 import com.hanzi.learner.data.local.dao.DisabledCharDao
 import com.hanzi.learner.data.local.dao.HanziProgressDao
@@ -14,7 +16,25 @@ class BackupRepository(
     private val phraseOverrideDao: PhraseOverrideDao,
     private val disabledCharDao: DisabledCharDao,
     private val appSettingsDao: AppSettingsDao,
+    private val transactionRunner: suspend (suspend () -> Unit) -> Unit,
 ) : BackupRepositoryContract {
+    /**
+     * Production constructor: runs transactions via Room's withTransaction.
+     */
+    constructor(
+        database: AppDatabase,
+        progressDao: HanziProgressDao,
+        phraseOverrideDao: PhraseOverrideDao,
+        disabledCharDao: DisabledCharDao,
+        appSettingsDao: AppSettingsDao,
+    ) : this(
+        progressDao = progressDao,
+        phraseOverrideDao = phraseOverrideDao,
+        disabledCharDao = disabledCharDao,
+        appSettingsDao = appSettingsDao,
+        transactionRunner = { block -> database.withTransaction { block() } },
+    )
+
     override suspend fun read(options: ExportOptions): BackupData {
         val progress = if (options.progress) progressDao.getAll() else emptyList()
         val phraseOverrides = if (options.phraseOverrides) phraseOverrideDao.getAll() else emptyList()
@@ -31,14 +51,18 @@ class BackupRepository(
     }
 
     override suspend fun replaceAll(data: BackupData) {
-        progressDao.deleteAll()
-        phraseOverrideDao.deleteAll()
-        disabledCharDao.deleteAll()
-        writeAll(data)
+        transactionRunner {
+            progressDao.deleteAll()
+            phraseOverrideDao.deleteAll()
+            disabledCharDao.deleteAll()
+            writeAll(data)
+        }
     }
 
     override suspend fun mergeAll(data: BackupData) {
-        writeAll(data)
+        transactionRunner {
+            writeAll(data)
+        }
     }
 
     private suspend fun writeAll(data: BackupData) {

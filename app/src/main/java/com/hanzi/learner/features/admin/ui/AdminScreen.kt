@@ -9,7 +9,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +36,7 @@ fun AdminScreen(
 ) {
     val dataChangedNotifier = remember { AdminDataChangedNotifier() }
     val factories = remember(deps) { AdminViewModelFactories.from(deps) }
-    val refreshVersion by dataChangedNotifier.version.collectAsState()
+    val refreshVersion by dataChangedNotifier.version.collectAsStateWithLifecycle()
     var indexItems by remember { mutableStateOf<List<CharIndexItem>>(emptyList()) }
     LaunchedEffect(refreshVersion, indexDataLoader) {
         indexItems = indexDataLoader.load()

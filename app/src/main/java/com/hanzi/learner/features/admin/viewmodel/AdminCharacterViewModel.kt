@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -52,7 +54,7 @@ data class AdminCharacterUiState(
     val todayEpochDay: Long = 0L,
 )
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
 class AdminCharacterViewModel(
     private val indexRepository: AdminIndexRepository,
     private val progressQueryRepository: AdminProgressQueryRepository,
@@ -61,6 +63,12 @@ class AdminCharacterViewModel(
     private val disabledCharRepository: AdminDisabledCharRepository,
     private val timeProvider: TimeProvider,
 ) : ViewModel() {
+    // PWR-02: Serialize bulk I/O operations to prevent concurrent conflicts
+    private val singleOp = Dispatchers.IO.limitedParallelism(1)
+
+    private val _isOperating = MutableStateFlow(false)
+    val isOperating: StateFlow<Boolean> = _isOperating.asStateFlow()
+
     private val _uiState = MutableStateFlow(AdminCharacterUiState())
     val uiState: StateFlow<AdminCharacterUiState> = _uiState.asStateFlow()
 
@@ -79,8 +87,12 @@ class AdminCharacterViewModel(
         val state: AdminCharacterUiState,
     )
 
+    // PWR-03: Debounce only search text to avoid delaying "load more" / "refresh"
+    @Suppress("OPT_IN_USAGE")
+    private val debouncedSearchText = _searchText.debounce(150).distinctUntilChanged()
+
     val filteredResult: StateFlow<FilteredCharacterResult> = combine(
-        _searchText, _filterMode, _displayCount, _uiState
+        debouncedSearchText, _filterMode, _displayCount, _uiState
     ) { search, filter, count, state ->
         FilterParams(search, filter, count, state)
     }.mapLatest { params ->
@@ -118,56 +130,64 @@ class AdminCharacterViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            try {
-                val indexItems = indexRepository.loadIndex()
-                val disabledChars = disabledCharRepository.getDisabledChars()
-                val allProgress = progressQueryRepository.getAllProgress()
-                val selectedChar = _uiState.value.selectedChar
+            refreshInternal()
+        }
+    }
 
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        indexItems = indexItems,
-                        disabledChars = disabledChars,
-                        allProgress = allProgress,
-                        selectedChar = selectedChar,
-                        todayEpochDay = timeProvider.todayEpochDay(),
-                    )
-                }
+    private suspend fun refreshInternal() {
+        _uiState.update { it.copy(isLoading = true, error = null) }
+        try {
+            val indexItems = indexRepository.loadIndex()
+            val disabledChars = disabledCharRepository.getDisabledChars()
+            val allProgress = progressQueryRepository.getAllProgress()
+            val selectedChar = _uiState.value.selectedChar
 
-                if (selectedChar != null) selectCharacter(selectedChar)
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknown error") }
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    indexItems = indexItems,
+                    disabledChars = disabledChars,
+                    allProgress = allProgress,
+                    selectedChar = selectedChar,
+                    todayEpochDay = timeProvider.todayEpochDay(),
+                )
             }
+
+            if (selectedChar != null) selectCharacterInternal(selectedChar)
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknown error") }
         }
     }
 
     fun selectCharacter(char: String?) {
         viewModelScope.launch {
-            if (char == null) {
-                _uiState.update {
-                    it.copy(
-                        selectedChar = null,
-                        selectedItem = null,
-                        progress = null,
-                        overridePhrases = emptyList(),
-                    )
-                }
-                return@launch
-            }
-            val item = _uiState.value.indexItems.firstOrNull { it.char == char }
-            val progress = progressQueryRepository.getProgress(char)
-            val po = phraseOverrideRepository.getPhraseOverride(char)
-            val phrases = po?.phrases.orEmpty()
+            selectCharacterInternal(char)
+        }
+    }
+
+    private suspend fun selectCharacterInternal(char: String?) {
+        if (char == null) {
             _uiState.update {
                 it.copy(
-                    selectedChar = char,
-                    selectedItem = item,
-                    progress = progress,
-                    overridePhrases = phrases,
+                    selectedChar = null,
+                    selectedItem = null,
+                    progress = null,
+                    overridePhrases = emptyList(),
                 )
             }
+            return
+        }
+        val item = _uiState.value.indexItems.firstOrNull { it.char == char }
+        val progress = progressQueryRepository.getProgress(char)
+        val po = phraseOverrideRepository.getPhraseOverride(char)
+        val phrases = po?.phrases.orEmpty()
+        _uiState.update {
+            it.copy(
+                selectedChar = char,
+                selectedItem = item,
+                progress = progress,
+                overridePhrases = phrases,
+            )
         }
     }
 
@@ -220,16 +240,26 @@ class AdminCharacterViewModel(
     }
 
     fun bulkDisable(chars: List<String>) {
-        viewModelScope.launch {
-            disabledCharRepository.disableAll(chars)
-            refresh()
+        viewModelScope.launch(singleOp) {
+            _isOperating.value = true
+            try {
+                disabledCharRepository.disableAll(chars)
+                refreshInternal()
+            } finally {
+                _isOperating.value = false
+            }
         }
     }
 
     fun bulkEnable(chars: List<String>) {
-        viewModelScope.launch {
-            disabledCharRepository.enableAll(chars)
-            refresh()
+        viewModelScope.launch(singleOp) {
+            _isOperating.value = true
+            try {
+                disabledCharRepository.enableAll(chars)
+                refreshInternal()
+            } finally {
+                _isOperating.value = false
+            }
         }
     }
 

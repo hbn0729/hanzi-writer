@@ -54,6 +54,7 @@ fun CharacterManagementTab(
     onResetWrongCount: (List<String>) -> Unit,
     onBulkDisable: (List<String>) -> Unit,
     onBulkEnable: (List<String>) -> Unit,
+    isBulkOperating: Boolean = false,
     onBack: () -> Unit,
 ) {
     var selectedChars by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -122,6 +123,7 @@ fun CharacterManagementTab(
                         selectedChars = selectedChars,
                         onBulkEnable = onBulkEnable,
                         onBulkDisable = onBulkDisable,
+                        isBulkOperating = isBulkOperating,
                         onMarkDueToday = onMarkDueToday,
                         onResetWrongCount = onResetWrongCount,
                         onResetProgress = onResetProgress,
@@ -239,6 +241,7 @@ private fun SelectedCharsActions(
     selectedChars: Set<String>,
     onBulkEnable: (List<String>) -> Unit,
     onBulkDisable: (List<String>) -> Unit,
+    isBulkOperating: Boolean,
     onMarkDueToday: (List<String>) -> Unit,
     onResetWrongCount: (List<String>) -> Unit,
     onResetProgress: (List<String>) -> Unit,
@@ -272,10 +275,10 @@ private fun SelectedCharsActions(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = { onBulkEnable(selectedChars.toList()) }, shape = RoundedCornerShape(8.dp)) { 
+                Button(onClick = { onBulkEnable(selectedChars.toList()) }, enabled = !isBulkOperating, shape = RoundedCornerShape(8.dp)) { 
                     Text(text = "启用") 
                 }
-                Button(onClick = { onBulkDisable(selectedChars.toList()) }, shape = RoundedCornerShape(8.dp)) { 
+                Button(onClick = { onBulkDisable(selectedChars.toList()) }, enabled = !isBulkOperating, shape = RoundedCornerShape(8.dp)) { 
                     Text(text = "禁用") 
                 }
                 Button(onClick = { onMarkDueToday(selectedChars.toList()) }, shape = RoundedCornerShape(8.dp)) { 

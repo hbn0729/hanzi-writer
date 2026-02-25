@@ -4,7 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,8 +33,8 @@ fun OverviewTabRoute(
 ) {
     val factory = remember(factories) { factories.dashboardFactory() }
     val viewModel: AdminDashboardViewModel = viewModel(factory = factory, key = "admin_dashboard")
-    val state by viewModel.uiState.collectAsState()
-    val refreshVersion by notifier.version.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val refreshVersion by notifier.version.collectAsStateWithLifecycle()
 
     LaunchedEffect(refreshVersion) {
         if (refreshVersion > 0) viewModel.loadDashboard()
@@ -65,11 +65,12 @@ fun CharacterManagementTabRoute(
 ) {
     val factory = remember(factories) { factories.characterFactory() }
     val viewModel: AdminCharacterViewModel = viewModel(factory = factory, key = "admin_character")
-    val state by viewModel.uiState.collectAsState()
-    val searchText by viewModel.searchText.collectAsState()
-    val filterMode by viewModel.filterMode.collectAsState()
-    val filteredResult by viewModel.filteredResult.collectAsState()
-    val refreshVersion by notifier.version.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchText by viewModel.searchText.collectAsStateWithLifecycle()
+    val filterMode by viewModel.filterMode.collectAsStateWithLifecycle()
+    val filteredResult by viewModel.filteredResult.collectAsStateWithLifecycle()
+    val isOperating by viewModel.isOperating.collectAsStateWithLifecycle()
+    val refreshVersion by notifier.version.collectAsStateWithLifecycle()
 
     LaunchedEffect(refreshVersion) {
         if (refreshVersion > 0) viewModel.refresh()
@@ -100,6 +101,7 @@ fun CharacterManagementTabRoute(
         onResetWrongCount = { viewModel.resetWrongCount(it) },
         onBulkDisable = { viewModel.bulkDisable(it) },
         onBulkEnable = { viewModel.bulkEnable(it) },
+        isBulkOperating = isOperating,
         onBack = onBack,
     )
 }
@@ -113,8 +115,8 @@ fun LearningDataTabRoute(
 ) {
     val factory = remember(factories) { factories.learningFactory() }
     val viewModel: AdminLearningDataViewModel = viewModel(factory = factory, key = "admin_learning")
-    val state by viewModel.uiState.collectAsState()
-    val refreshVersion by notifier.version.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val refreshVersion by notifier.version.collectAsStateWithLifecycle()
 
     LaunchedEffect(refreshVersion) {
         if (refreshVersion > 0) viewModel.refresh()
@@ -140,8 +142,8 @@ fun SettingsTabRoute(
 ) {
     val factory = remember(factories) { factories.settingsFactory() }
     val viewModel: AdminSettingsViewModel = viewModel(factory = factory, key = "admin_settings")
-    val state by viewModel.uiState.collectAsState()
-    val refreshVersion by notifier.version.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val refreshVersion by notifier.version.collectAsStateWithLifecycle()
 
     LaunchedEffect(refreshVersion) {
         if (refreshVersion > 0) viewModel.load()
@@ -167,7 +169,7 @@ fun BackupTabRoute(
         factories.backupFactory(onDataChanged = notifier::notifyDataChanged)
     }
     val viewModel: AdminBackupViewModel = viewModel(factory = factory, key = "admin_backup")
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     var backupImportMode by remember { mutableStateOf(ImportMode.Replace) }
     val exportLauncher = rememberLauncherForActivityResult(

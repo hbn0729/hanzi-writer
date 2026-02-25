@@ -23,7 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,8 +74,8 @@ fun PracticeScreen(
         )
     }
     val viewModel: PracticeViewModel = viewModel(factory = factory)
-    val uiState by viewModel.uiState.collectAsState()
-    val flashState by viewModel.flashState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val flashState by viewModel.flashState.collectAsStateWithLifecycle()
 
     SeniorTheme {
         PracticeFeedbackEffects(

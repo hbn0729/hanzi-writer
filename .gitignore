@@ -16,7 +16,6 @@ local.properties
 
 tts_models/
 
-
 # Kotlin
 .kotlin/
 kotlin-lsp-*.zip
