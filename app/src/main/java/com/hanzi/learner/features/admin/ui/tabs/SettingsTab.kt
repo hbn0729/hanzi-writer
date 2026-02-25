@@ -79,6 +79,21 @@ fun SettingsTab(
                             onCheckedChange = { onUpdateSettings(s.copy(useExternalDataset = it)) },
                         )
                     }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "自动朗读", style = MaterialTheme.typography.titleMedium)
+                            Text(text = "进入练习时自动朗读汉字和词语", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                        }
+                        Switch(
+                            checked = s.autoReadAloud,
+                            onCheckedChange = { onUpdateSettings(s.copy(autoReadAloud = it)) },
+                        )
+                    }
                 }
             }
         }

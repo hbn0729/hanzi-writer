@@ -110,6 +110,7 @@ class PracticeSessionOrchestrator(
                 repo = charRepo,
                 windowManager = sessionManager,
                 hintAfterMisses = settings.hintAfterMisses,
+                autoReadAloud = settings.autoReadAloud,
             )
         }
 

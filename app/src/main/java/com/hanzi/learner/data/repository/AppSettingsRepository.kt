@@ -20,10 +20,12 @@ private fun AppSettingsEntity.toData(): AppSettings = AppSettings(
     duePickLimit = duePickLimit,
     hintAfterMisses = hintAfterMisses,
     useExternalDataset = useExternalDataset,
+    autoReadAloud = autoReadAloud,
 )
 
 private fun AppSettings.toEntity(): AppSettingsEntity = AppSettingsEntity(
     duePickLimit = duePickLimit,
     hintAfterMisses = hintAfterMisses,
     useExternalDataset = useExternalDataset,
+    autoReadAloud = autoReadAloud,
 )

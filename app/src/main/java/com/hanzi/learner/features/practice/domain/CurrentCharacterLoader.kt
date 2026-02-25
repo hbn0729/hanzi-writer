@@ -11,6 +11,7 @@ class CurrentCharacterLoader(
         repo: CharacterRepository?,
         windowManager: PracticeWindowManager,
         hintAfterMisses: Int,
+        autoReadAloud: Boolean = true,
     ): PracticeSessionState {
         val activeRepo = repo ?: return PracticeSessionState(isSessionComplete = true)
 
@@ -33,6 +34,7 @@ class CurrentCharacterLoader(
                 currentItem = item,
                 currentPhrase = phrase,
                 hintAfterMisses = hintAfterMisses,
+                autoReadAloud = autoReadAloud,
                 windowItems = windowManager.windowItems,
             )
         }

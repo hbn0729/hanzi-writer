@@ -85,6 +85,7 @@ fun PracticeScreen(
             speaker = speaker,
             currentChar = uiState.currentItem?.char,
             currentPhrase = uiState.currentPhrase,
+            autoReadAloud = uiState.autoReadAloud,
         )
 
         PracticeContent(
@@ -107,6 +108,7 @@ private fun PracticeFeedbackEffects(
     speaker: TtsSpeakerContract,
     currentChar: String?,
     currentPhrase: String,
+    autoReadAloud: Boolean,
 ) {
     val haptics = LocalHapticFeedback.current
 
@@ -115,7 +117,7 @@ private fun PracticeFeedbackEffects(
     }
 
     LaunchedEffect(currentChar) {
-        if (!currentChar.isNullOrEmpty()) {
+        if (!currentChar.isNullOrEmpty() && autoReadAloud) {
             speaker.speakCharacterAndPhrase(currentChar, currentPhrase)
         }
     }

@@ -1,0 +1,226 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 6,
+    "identityHash": "a369a1f0e4e50a6e49eab409e46bdd17",
+    "entities": [
+      {
+        "tableName": "hanzi_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`char` TEXT NOT NULL, `correctCount` INTEGER NOT NULL, `wrongCount` INTEGER NOT NULL, `lastStudiedDay` INTEGER NOT NULL, `nextDueDay` INTEGER NOT NULL, `intervalDays` INTEGER NOT NULL, PRIMARY KEY(`char`))",
+        "fields": [
+          {
+            "fieldPath": "char",
+            "columnName": "char",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correctCount",
+            "columnName": "correctCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wrongCount",
+            "columnName": "wrongCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastStudiedDay",
+            "columnName": "lastStudiedDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextDueDay",
+            "columnName": "nextDueDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervalDays",
+            "columnName": "intervalDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "char"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_hanzi_progress_nextDueDay",
+            "unique": false,
+            "columnNames": [
+              "nextDueDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hanzi_progress_nextDueDay` ON `${TABLE_NAME}` (`nextDueDay`)"
+          },
+          {
+            "name": "index_hanzi_progress_lastStudiedDay",
+            "unique": false,
+            "columnNames": [
+              "lastStudiedDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hanzi_progress_lastStudiedDay` ON `${TABLE_NAME}` (`lastStudiedDay`)"
+          },
+          {
+            "name": "index_hanzi_progress_wrongCount",
+            "unique": false,
+            "columnNames": [
+              "wrongCount"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hanzi_progress_wrongCount` ON `${TABLE_NAME}` (`wrongCount`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "phrase_override",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`char` TEXT NOT NULL, `phrasesJson` TEXT NOT NULL, PRIMARY KEY(`char`))",
+        "fields": [
+          {
+            "fieldPath": "char",
+            "columnName": "char",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phrasesJson",
+            "columnName": "phrasesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "char"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "disabled_char",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`char` TEXT NOT NULL, PRIMARY KEY(`char`))",
+        "fields": [
+          {
+            "fieldPath": "char",
+            "columnName": "char",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "char"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "app_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `duePickLimit` INTEGER NOT NULL, `hintAfterMisses` INTEGER NOT NULL, `useExternalDataset` INTEGER NOT NULL, `autoReadAloud` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duePickLimit",
+            "columnName": "duePickLimit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hintAfterMisses",
+            "columnName": "hintAfterMisses",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "useExternalDataset",
+            "columnName": "useExternalDataset",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "autoReadAloud",
+            "columnName": "autoReadAloud",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "tts_preference",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `selectedModelId` TEXT, `speechRate` REAL NOT NULL, `pitch` REAL NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedModelId",
+            "columnName": "selectedModelId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "speechRate",
+            "columnName": "speechRate",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pitch",
+            "columnName": "pitch",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a369a1f0e4e50a6e49eab409e46bdd17')"
+    ]
+  }
+}

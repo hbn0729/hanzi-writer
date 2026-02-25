@@ -14,5 +14,6 @@ data class PracticeSessionState(
     val completedStrokeCount: Int = 0,
     val mistakesOnStroke: Int = 0,
     val hintAfterMisses: Int = 2,
+    val autoReadAloud: Boolean = true,
     val windowItems: List<CharIndexItem> = emptyList(),
 )

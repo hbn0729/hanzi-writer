@@ -99,6 +99,7 @@ data class PracticeUiState(
     val completedStrokeCount: Int = 0,
     val mistakesOnStroke: Int = 0,
     val hintAfterMisses: Int = 2,
+    val autoReadAloud: Boolean = true,
     val windowItems: List<CharIndexItem> = emptyList(),
 )
 
@@ -190,6 +191,7 @@ class PracticeViewModel(
                 completedStrokeCount = state.completedStrokeCount,
                 mistakesOnStroke = state.mistakesOnStroke,
                 hintAfterMisses = state.hintAfterMisses,
+                autoReadAloud = state.autoReadAloud,
                 windowItems = state.windowItems,
             )
         }

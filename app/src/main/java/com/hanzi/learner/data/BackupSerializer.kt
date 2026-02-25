@@ -51,6 +51,7 @@ class BackupSerializer(
                     .put("duePickLimit", settings.duePickLimit)
                     .put("hintAfterMisses", settings.hintAfterMisses)
                     .put("useExternalDataset", settings.useExternalDataset)
+                    .put("autoReadAloud", settings.autoReadAloud)
             )
         }
 
@@ -103,6 +104,7 @@ class BackupSerializer(
                 duePickLimit = settingsObj.optInt("duePickLimit", 50),
                 hintAfterMisses = settingsObj.optInt("hintAfterMisses", 2),
                 useExternalDataset = settingsObj.optBoolean("useExternalDataset", false),
+                autoReadAloud = settingsObj.optBoolean("autoReadAloud", true),
             )
         } else {
             null

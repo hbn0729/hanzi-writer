@@ -15,6 +15,7 @@ internal fun AppSettingsEntity.toAdminSettings(): AdminSettings = AdminSettings(
     duePickLimit = duePickLimit,
     hintAfterMisses = hintAfterMisses,
     useExternalDataset = useExternalDataset,
+    autoReadAloud = autoReadAloud,
 )
 
 internal fun AdminSettings.toEntity(): AppSettingsEntity = AppSettingsEntity(
@@ -22,6 +23,7 @@ internal fun AdminSettings.toEntity(): AppSettingsEntity = AppSettingsEntity(
     duePickLimit = duePickLimit,
     hintAfterMisses = hintAfterMisses,
     useExternalDataset = useExternalDataset,
+    autoReadAloud = autoReadAloud,
 )
 
 internal fun HanziProgressEntity.toAdminProgress(): AdminProgress = AdminProgress(
