@@ -28,6 +28,7 @@ internal class SystemTtsSpeaker(
 
     private var tts: TextToSpeech? = null
     private var isEngineReady = false
+    private var isReinitializing = false
 
     private val _isReady = MutableStateFlow(false)
     override val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
@@ -44,11 +45,33 @@ internal class SystemTtsSpeaker(
             if (status == TextToSpeech.SUCCESS) {
                 Log.d(TAG, "System TTS engine initialized with default engine")
                 isEngineReady = true
+                isReinitializing = false
                 configureChineseLocale()
             } else {
                 Log.e(TAG, "System TTS initialization failed with status: $status")
                 _isReady.value = false
+                isReinitializing = false
             }
+        }
+    }
+
+    private fun reinitializeTts() {
+        if (isReinitializing) {
+            Log.d(TAG, "Reinitialization already in progress, skipping")
+            return
+        }
+        Log.d(TAG, "Reinitializing TTS engine due to disconnection")
+        isReinitializing = true
+        _isReady.value = false
+        isEngineReady = false
+
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+
+        scope.launch {
+            delay(100)
+            initializeTts()
         }
     }
 
@@ -110,7 +133,7 @@ internal class SystemTtsSpeaker(
 
     override fun speak(text: String) {
         Log.d(TAG, "speak() called: $text, isReady: ${_isReady.value}")
-        if (!_isReady.value) {
+        if (!_isReady.value || isReinitializing) {
             Log.w(TAG, "Speaker not ready, queuing speak request")
             pendingRequestHandler.enqueue(TtsRequest.Speak(text))
             return
@@ -121,17 +144,31 @@ internal class SystemTtsSpeaker(
     private fun executeSpeak(text: String) {
         val ttsInstance = tts
         if (ttsInstance == null || !isEngineReady) {
-            Log.e(TAG, "TTS not available for speak")
+            Log.e(TAG, "TTS not available for speak, triggering reinitialization")
+            reinitializeTts()
+            pendingRequestHandler.enqueue(TtsRequest.Speak(text))
             return
         }
 
-        ttsInstance.stop()
-        ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, "speak_${System.currentTimeMillis()}")
+        val stopResult = ttsInstance.stop()
+        if (stopResult == TextToSpeech.ERROR) {
+            Log.e(TAG, "TTS stop failed, engine may be disconnected, triggering reinitialization")
+            reinitializeTts()
+            pendingRequestHandler.enqueue(TtsRequest.Speak(text))
+            return
+        }
+
+        val speakResult = ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, "speak_${System.currentTimeMillis()}")
+        if (speakResult == TextToSpeech.ERROR) {
+            Log.e(TAG, "TTS speak failed, engine may be disconnected, triggering reinitialization")
+            reinitializeTts()
+            pendingRequestHandler.enqueue(TtsRequest.Speak(text))
+        }
     }
 
     override fun speakCharacterAndPhrase(character: String, phrase: String) {
         Log.d(TAG, "speakCharacterAndPhrase() called: '$character', '$phrase', isReady: ${_isReady.value}")
-        if (!_isReady.value) {
+        if (!_isReady.value || isReinitializing) {
             Log.w(TAG, "Speaker not ready, queuing speakCharacterAndPhrase request")
             pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
             return
@@ -142,20 +179,37 @@ internal class SystemTtsSpeaker(
     private fun executeSpeakCharacterAndPhrase(character: String, phrase: String) {
         val ttsInstance = tts
         if (ttsInstance == null || !isEngineReady) {
-            Log.e(TAG, "TTS not available for speakCharacterAndPhrase")
+            Log.e(TAG, "TTS not available for speakCharacterAndPhrase, triggering reinitialization")
+            reinitializeTts()
+            pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
+            return
+        }
+
+        val stopResult = ttsInstance.stop()
+        if (stopResult == TextToSpeech.ERROR) {
+            Log.e(TAG, "TTS stop failed, engine may be disconnected, triggering reinitialization")
+            reinitializeTts()
+            pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
             return
         }
 
         scope.launch {
-            ttsInstance.stop()
-
             val charUtteranceId = "char_${System.currentTimeMillis()}"
-            ttsInstance.speak(character, TextToSpeech.QUEUE_FLUSH, null, charUtteranceId)
+            val speakResult = ttsInstance.speak(character, TextToSpeech.QUEUE_FLUSH, null, charUtteranceId)
+            if (speakResult == TextToSpeech.ERROR) {
+                Log.e(TAG, "TTS speak failed for character, engine may be disconnected, triggering reinitialization")
+                reinitializeTts()
+                pendingRequestHandler.enqueue(TtsRequest.SpeakCharacterAndPhrase(character, phrase))
+                return@launch
+            }
 
             if (phrase.isNotEmpty()) {
                 delay(800)
                 val phraseUtteranceId = "phrase_${System.currentTimeMillis()}"
-                ttsInstance.speak(phrase, TextToSpeech.QUEUE_ADD, null, phraseUtteranceId)
+                val phraseResult = ttsInstance.speak(phrase, TextToSpeech.QUEUE_ADD, null, phraseUtteranceId)
+                if (phraseResult == TextToSpeech.ERROR) {
+                    Log.e(TAG, "TTS speak failed for phrase, engine may be disconnected")
+                }
             }
         }
     }
