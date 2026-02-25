@@ -1,0 +1,78 @@
+# Baseline Profile for Hanzi Learner
+# Pre-compiles startup + practice hot paths via AOT at install time.
+# Format: H=Hot, S=Startup, P=Post-startup, L=class load
+
+# ── Application & Activity (startup critical) ──
+HSPLcom/hanzi/learner/HanziLearnerApplication;->onCreate()V
+HSPLcom/hanzi/learner/MainActivity;->onCreate(Landroid/os/Bundle;)V
+Lcom/hanzi/learner/HanziLearnerApplication;
+Lcom/hanzi/learner/MainActivity;
+
+# ── DI / Composition Root (startup) ──
+Lcom/hanzi/learner/app/AppContainer;
+Lcom/hanzi/learner/app/CoreDataModule;
+Lcom/hanzi/learner/app/PracticeModule;
+Lcom/hanzi/learner/app/AdminModule;
+Lcom/hanzi/learner/app/DefaultCharacterRepositoryProvider;
+
+# ── Navigation & top-level composables (startup) ──
+Lcom/hanzi/learner/app/AppNavGraphKt;
+Lcom/hanzi/learner/app/HanziLearnerAppKt;
+
+# ── Theme (startup, every composable uses it) ──
+Lcom/hanzi/learner/app/theme/ThemeKt;
+Lcom/hanzi/learner/app/theme/ClaymorphismKt;
+Lcom/hanzi/learner/app/theme/ColorKt;
+Lcom/hanzi/learner/app/theme/TypeKt;
+
+# ── Home feature (first screen after startup) ──
+Lcom/hanzi/learner/features/home/ui/**;
+Lcom/hanzi/learner/features/home/viewmodel/**;
+Lcom/hanzi/learner/features/home/domain/**;
+
+# ── Practice feature (primary user flow, hot) ──
+HSPLcom/hanzi/learner/features/practice/ui/PracticeScreenKt;->PracticeScreen(Landroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/functions/Function0;Lcom/hanzi/learner/app/PracticeFeatureDependencies;ZLandroidx/compose/runtime/Composer;II)V
+Lcom/hanzi/learner/features/practice/ui/**;
+Lcom/hanzi/learner/features/practice/viewmodel/**;
+Lcom/hanzi/learner/features/practice/domain/**;
+
+# ── Character writer engine (hot during practice) ──
+Lcom/hanzi/learner/character_writer/data/**;
+Lcom/hanzi/learner/character_writer/model/**;
+Lcom/hanzi/learner/character_writer/render/**;
+Lcom/hanzi/learner/character_writer/match/**;
+Lcom/hanzi/learner/character_writer/practice/**;
+
+# ── Data layer (startup: DB init, repository load) ──
+Lcom/hanzi/learner/data/local/**;
+Lcom/hanzi/learner/data/repository/**;
+Lcom/hanzi/learner/data/model/**;
+
+# ── Speech (post-startup, used in practice) ──
+Lcom/hanzi/learner/speech/**;
+
+# ── Common ports ──
+Lcom/hanzi/learner/features/common/ports/**;
+
+# ── Compose framework hot paths ──
+Landroidx/compose/runtime/**;
+Landroidx/compose/ui/**;
+Landroidx/compose/foundation/**;
+Landroidx/compose/material3/**;
+Landroidx/compose/animation/**;
+Landroidx/navigation/**;
+Landroidx/lifecycle/**;
+Landroidx/activity/**;
+
+# ── Room (DB open on startup) ──
+Landroidx/room/**;
+Landroidx/sqlite/**;
+
+# ── Coroutines (used everywhere) ──
+Lkotlinx/coroutines/**;
+
+# ── Immutable collections ──
+Lkotlinx/collections/immutable/**;
+
+# ── ProfileInstaller itself ──
+Landroidx/profileinstaller/**;

@@ -97,6 +97,7 @@ dependencies {
     ksp("androidx.room:room-compiler:2.5.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5")
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
 //    implementation(files("libs/sherpa-onnx-1.12.25.aar"))
 }
 
