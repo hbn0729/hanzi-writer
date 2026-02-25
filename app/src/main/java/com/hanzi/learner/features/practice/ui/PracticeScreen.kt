@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -335,13 +336,22 @@ private fun PracticeTopBar(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        phrase.forEach { char ->
-                            val isTarget = char.toString() == hanzi
+                        val chars = buildList {
+                            var i = 0
+                            while (i < phrase.length) {
+                                val cp = phrase.codePointAt(i)
+                                add(String(Character.toChars(cp)))
+                                i += Character.charCount(cp)
+                            }
+                        }
+                        chars.forEach { charStr ->
+                            val isTarget = charStr == hanzi
                             Text(
-                                text = char.toString(),
+                                text = charStr,
                                 fontSize = 50.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = if (isTarget) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isTarget) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                textDecoration = if (isTarget) androidx.compose.ui.text.style.TextDecoration.Underline else null,
                                 modifier = Modifier.graphicsLayer {
                                     val currentScale = scaleValueProvider()
                                     if (isTarget) {
