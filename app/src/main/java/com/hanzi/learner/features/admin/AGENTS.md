@@ -20,6 +20,7 @@ admin/
 | Tab navigation | `ui/AdminTabRoutes.kt` | high churn integration point |
 | Main shell screen | `ui/AdminScreen.kt` | tab host and wiring |
 | Character management (字管理) | `ui/tabs/CharacterManagementTab.kt` | supports paging for large character lists (3000+ chars) |
+| Settings (设置) | `ui/tabs/SettingsTab.kt` | hint threshold, due limit, external dataset, auto-read-aloud toggles |
 | Backup business flow | `viewmodel/AdminBackupViewModel.kt`, `repository/backup/*` | enforce port segregation |
 | Import/export parsing | `backup/StrokeDatasetParser.kt`, `StrokeDatasetWriter.kt` | data contract-sensitive |
 | ViewModel factories | `ui/AdminViewModelFactories.kt` | centralized factory creation from `AdminFeatureDependencies` |

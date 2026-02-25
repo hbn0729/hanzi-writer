@@ -249,4 +249,36 @@ class PracticeSessionOrchestratorTest {
         val firstCompletionDoesNotReturnRecordedCompletion = result.completion == null
         assertTrue(firstCompletionDoesNotReturnRecordedCompletion)
     }
+
+    @Test
+    fun startSession_withAutoReadAloudFalse_propagatesToState() = runTest {
+        val settings = AppSettings(autoReadAloud = false)
+        val orchestrator = createOrchestrator(
+            index = listOf(item("一")),
+            characters = mapOf("一" to characterData("一")),
+            dueChars = listOf("一"),
+            settings = settings,
+        )
+
+        val session = orchestrator.create(reviewOnly = false)
+        val state = session.startSession()
+
+        assertEquals(false, state.autoReadAloud)
+    }
+
+    @Test
+    fun startSession_withAutoReadAloudTrue_propagatesToState() = runTest {
+        val settings = AppSettings(autoReadAloud = true)
+        val orchestrator = createOrchestrator(
+            index = listOf(item("一")),
+            characters = mapOf("一" to characterData("一")),
+            dueChars = listOf("一"),
+            settings = settings,
+        )
+
+        val session = orchestrator.create(reviewOnly = false)
+        val state = session.startSession()
+
+        assertEquals(true, state.autoReadAloud)
+    }
 }

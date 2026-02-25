@@ -14,6 +14,7 @@ Core learning loop: choose next character, run stroke session, evaluate match/mi
 - TTS is consumed via `rememberTtsSpeaker(context)` — no ViewModel needed for speech.
 - Practice screen is wrapped in `SeniorTheme` for elderly-friendly large typography.
 - UI elements use `claymorphism()` and `clayClickable()` modifiers for consistent clay-style appearance.
+- **Auto-read-aloud**: `PracticeUiState.autoReadAloud` controls automatic TTS on character change; manual speaker button always works regardless of this setting.
 ## ANTI-PATTERNS
 - Do not introduce direct repository/DAO access in `ui`.
 - Do not couple `PracticeViewModel` back to concrete orchestration types forbidden by guardrail tests.

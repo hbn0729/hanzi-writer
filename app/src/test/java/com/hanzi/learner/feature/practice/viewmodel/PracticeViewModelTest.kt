@@ -63,10 +63,12 @@ class PracticeViewModelTest {
     private fun createViewModel(
         progressRepo: ProgressRepositoryContract,
         reviewOnly: Boolean = false,
+        settings: AppSettings = AppSettings(),
     ): PracticeViewModel {
+        val settingsRepo = FakeAppSettingsRepository(settings)
         val pickNextItem = PickNextPracticeItemUseCase(progressRepo)
         val engineFactory = PracticeSessionOrchestrator(
-            appSettingsRepository = appSettingsRepository,
+            appSettingsRepository = settingsRepo,
             disabledCharRepository = disabledCharRepository,
             characterRepositoryProvider = characterRepositoryProvider,
             itemSelector = pickNextItem,
@@ -129,8 +131,10 @@ class PracticeViewModelTest {
         override suspend fun loadCharacter(item: CharIndexItem): CharacterData = characters[item.char] ?: throw IllegalArgumentException("Character not found")
     }
 
-    private class FakeAppSettingsRepository : AppSettingsRepositoryContract {
-        override suspend fun getSettings(): AppSettings = AppSettings()
+    private class FakeAppSettingsRepository(
+        private val settings: AppSettings = AppSettings()
+    ) : AppSettingsRepositoryContract {
+        override suspend fun getSettings(): AppSettings = settings
 
         override suspend fun updateSettings(settings: AppSettings) {}
     }
@@ -325,6 +329,31 @@ class PracticeViewModelTest {
             assertEquals(1, state.strokeIndex)
             assertEquals(1, state.completedStrokeCount)
             assertEquals(1, state.mistakesOnStroke)
+        }
+    }
+
+    // Test 8: autoReadAloud propagates to UiState
+    @Test
+    fun loadPracticeSession_propagatesAutoReadAloudToUiState() = runTest {
+        val progressRepo = ProgressRepository(
+            dao = createFakeDao(dueChars = listOf("一")),
+            timeProvider = SystemTimeProvider,
+            policy = DefaultSpacedRepetitionPolicy,
+        )
+        val settings = AppSettings(
+            duePickLimit = 50,
+            hintAfterMisses = 3,
+            autoReadAloud = false,
+        )
+        val viewModel = createViewModel(progressRepo, settings = settings)
+
+        viewModel.onAction(PracticeAction.Start)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(false, state.autoReadAloud)
+            assertEquals(3, state.hintAfterMisses)
         }
     }
 }
